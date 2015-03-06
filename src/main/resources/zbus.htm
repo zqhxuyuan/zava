@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<title>ZBUS Admin</title>
+<script type="text/javascript" src="/?cmd=admin&&sub_cmd=jquery"></script>
+<style>
+table {
+  font-family: "Helvetica Neue", Helvetica, sans-serif
+}
+caption {
+  text-align: left;
+  color: silver;
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 5px;
+}
+
+thead {
+  background: SteelBlue;
+  color: white;
+}
+th,
+td {
+  padding: 5px 10px;
+}
+
+tbody tr:nth-child(even) {
+  background: WhiteSmoke;
+}
+
+tbody tr td:nth-child(2) {
+  text-align:center;
+}
+
+tbody tr td:nth-child(3),
+tbody tr td:nth-child(4) {
+  text-align: right;
+  font-family: monospace;
+}
+
+tfoot {
+  background: SeaGreen;
+  color: white;
+  text-align: right;
+}
+
+tfoot tr th:last-child {
+  font-family: monospace;
+}
+
+
+</style>
+</head>
+<body> 
+<h2 style="text-align: center;">ZBUS服务总线监控管理【<label id="broker"></label>】</h2>
+
+<div align="center">
+
+
+<script type="text/javascript">
+Date.prototype.Format = function (fmt) { //author: meizz 
+    var o = {
+        "M+": this.getMonth() + 1, //月份 
+        "d+": this.getDate(), //日 
+        "h+": this.getHours(), //小时 
+        "m+": this.getMinutes(), //分 
+        "s+": this.getSeconds(), //秒 
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+        "S": this.getMilliseconds() //毫秒 
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+function timeConverter(unixTime){ 
+	var d = new Date(unixTime);
+	return d.Format("yyyy-MM-dd hh:mm:ss"); 
+	//return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+d.getHours()+":"+d.getMinutes();
+}
+
+$(document).ready(function(){
+var MODE_MQ = 1;
+var MODE_PUBSUB = 2; 
+var MODE_TEMP = 4;
+
+$.getJSON('/?cmd=admin&&sub_cmd=data',function(data){ 
+    $("#broker").html(data.broker); 
+     
+    $.each(data.mqTable, function(key, mq){  
+    	if(key=='@type') return;
+    	if((mq.mode & MODE_PUBSUB) != 0) return; //pubsub
+    	if((mq.mode & MODE_TEMP) != 0) return;
+        $("#mq_table").append(
+			"<tr>\
+				<td>"+ mq.name +"</td>\
+				<td style='text-align:left;'>队列</td>\
+				<td>"+ mq.consumerInfoList.length +"</td>\
+				<td>"+ mq.unconsumedMsgCount +"</td>\
+				<td>"+ timeConverter(mq.createdTime) +" </td>\
+				<td>"+ mq.creator +" </td>\
+				<td><a href=''>清空消息</a></td>\
+			</tr>"
+		);
+    }); 
+    $.each(data.mqTable, function(key, mq){  
+    	if(key=='@type') return;
+    	if((mq.mode & MODE_PUBSUB) == 0) return;
+    	if((mq.mode & MODE_TEMP) != 0) return;
+        $("#mq_table").append(
+			"<tr>\
+				<td>"+ mq.name +"</td>\
+				<td style='text-align:left;'>订阅</td>\
+				<td>"+ mq.consumerInfoList.length +"</td>\
+				<td>"+ mq.unconsumedMsgCount +"</td>\
+				<td>"+ timeConverter(mq.createdTime) +" </td>\
+				<td>"+ mq.creator +" </td>\
+				<td><a href=''>清空消息</a></td>\
+			</tr>"
+		);
+    }); 
+    
+    $.each(data.mqTable, function(key, mq){  
+    	if(key=='@type') return;
+    	if((mq.mode & MODE_PUBSUB) != 0) return; //pubsub
+    	if((mq.mode & MODE_TEMP) == 0) return;
+        $("#mq_table").append(
+			"<tr>\
+				<td>"+ mq.name +"</td>\
+				<td style='text-align:left;'>队列【临时】</td>\
+				<td>"+ mq.consumerInfoList.length +"</td>\
+				<td>"+ mq.unconsumedMsgCount +"</td>\
+				<td>"+ timeConverter(mq.createdTime) +" </td>\
+				<td>"+ mq.creator +" </td>\
+				<td><a href=''>清空消息</a></td>\
+			</tr>"
+		);
+    }); 
+    
+    $.each(data.mqTable, function(key, mq){  
+    	if(key=='@type') return;
+    	if((mq.mode & MODE_PUBSUB) == 0) return;
+    	if((mq.mode & MODE_TEMP) == 0) return;
+        $("#mq_table").append(
+			"<tr>\
+				<td>"+ mq.name +"</td>\
+				<td style='text-align:left;'>订阅【临时】</td>\
+				<td>"+ mq.consumerInfoList.length +"</td>\
+				<td>"+ mq.unconsumedMsgCount +"</td>\
+				<td>"+ timeConverter(mq.createdTime) +" </td>\
+				<td>"+ mq.creator +" </td>\
+				<td><a href=''>清空消息</a></td>\
+			</tr>"
+		);
+    }); 
+    
+    
+}); 
+
+});
+</script> 
+	
+<table>
+	<thead>
+	<tr>
+	<th>消息队列标识</th>
+	<th>类型</th>
+	<th>消费者(服务)</th>
+	<th>未消费消息</th> 
+	<th>创建时间</th> 
+	<th>创建者</th> 
+	<th>操作</th>
+	</tr>
+	</thead>
+
+<tbody id="mq_table"> 
+
+</tbody>
+
+
+</table> 
+
+</body>
+
+</html>

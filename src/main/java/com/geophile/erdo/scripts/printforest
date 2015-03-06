@@ -1,0 +1,19 @@
+#!/usr/bin/python
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import sys
+import os
+import os.path
+
+dbdir = sys.argv[1]
+if len(sys.argv) > 2:
+    printtree_args = sys.argv[2:]
+else:
+    printtree_args = []
+
+for file in os.listdir(os.path.join(dbdir, 'forest')):
+    treeid = file[:file.find('.')]
+    os.system('printtree %s %s %s > t%s' % (dbdir, treeid, ' '.join(printtree_args), treeid))
