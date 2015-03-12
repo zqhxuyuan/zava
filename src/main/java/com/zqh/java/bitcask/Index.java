@@ -2,6 +2,9 @@ package com.zqh.java.bitcask;
 
 import java.io.Serializable;
 
+/**
+ * 内存中对key进行索引
+ */
 public class Index implements Serializable {
     public final String key;
     public final long offset;

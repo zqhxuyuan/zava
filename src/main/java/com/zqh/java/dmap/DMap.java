@@ -125,8 +125,9 @@ public class DMap {
       cachedByteBuffers_ = new CachingHashMap<>(cacheBlockCount_);
   }
 
-  /*  This public Builder class allows creation of customized DMap instance.
-   *  This is the Only way to create a DMap instance.
+  /*
+   * This public Builder class allows creation of customized DMap instance.
+   * This is the Only way to create a DMap instance.
    */
   public static class Builder {
     private boolean preloadOffsets_;
@@ -218,6 +219,7 @@ public class DMap {
     //首先定位到GlobalTrailerOffset,在DMapBuilder.build的最末尾,这个位置开始首先写入BlockCount
     long trailerOffset = getGlobalTrailerOffset();
     raf_.position(trailerOffset);
+    //读取出BlockCounts
     return raf_.readVInt();
   }
 
@@ -326,6 +328,7 @@ public class DMap {
     return valueOffset;
   }
 
+  // 定位到Header的postion=13位置,读取出里面的值,这个值是GlobalTrailerOffset在文件中的位置
   private long getGlobalTrailerOffset() throws IOException {
     raf_.position(DEFAULT_LOC_FOR_TRAILER_OFFSET);
     return raf_.readLong();
@@ -333,17 +336,23 @@ public class DMap {
 
     /**
      *
-     * @param trailerStartOffset Trailer的start实际上是key的开始位置
+     * @param trailerStartOffset BlockTrailer的start-offset
      * @param trailerSize 这个值的计算方式是下一个Block的start减去前一个Block的Trailer.
      * @throws IOException
      */
   private void processBlockTrailer(long trailerStartOffset, long trailerSize) throws IOException {
+    //将BlockTrailer的内存都加载到内存中. BlockTrailer的信息是在DMapBuilder.updateBlockTrailer写入的
+    //主要是要将key和value在Block中的offset映射起来. 这样根据key能找到offset,从而在Block的offset处开始读取结果数据
     MappedByteBuffer trailerBuffer = raf_.map(MapMode.READ_ONLY, trailerStartOffset, trailerSize);
     if(!preloadAllKeyOffsets) {
+      //不预先加载keyOffset.这里的keyOffset中的offset指的是key对应的value在Block中的offset.
+      //如果预先加载到内存中,则key对应的value的offset都在内存中.要查找key对应的value时,
+      //直接获取tmpKeyOffsetMap.get(key)得到offset,然后定位到Block的offset开始读取数据.
+      //如果没有预先加载,相当于BlockTrailer这部分信息要在get(key)的时候每次都解析一次.
+      //放到内存的好处是事先把BlockTrailer的信息都解析出来.这样在get时,直接从内存获取,无需解析.
       blockTrailerBuffer_.put(trailerStartOffset, trailerBuffer);
     } else {
-      //Block之后是key部分: 见DMapBuilder.updateBlockTrailer,首先写入当前Block的key数量
-      //因为写入的使用使用writeVInt,对应读取的时候就用readVInt
+      //BlockTrailer首先写入当前Block的key数量,因为写入的使用使用writeVInt,对应读取的时候就用readVInt
       int numKeysInBlock = CompressionUtils.readVInt(trailerBuffer);
       //构造和key数量相符(初始容量)的Map
       TObjectIntHashMap<ByteArray> tmpKeyOffsetMap = 
@@ -360,12 +369,15 @@ public class DMap {
         //key->value在当前Block的offset
         tmpKeyOffsetMap.put(currentKeyBytes, offset);
       }
-      //BlockTrailer的开始位置--> <key-->key在Block里的offset>
+      //BlockTrailer的开始位置--> <key-->value在Block里的offset>
+      //因为一个DataBlock写入了多个value,同样BlockTrailer里也记录了多个key.
+      //blockTrailerKeys记录的是一个BlockTrailer的offset, 以及在这里面的所有key和所有value在Block中的offset
       blockTrailerKeys.put(trailerStartOffset, tmpKeyOffsetMap);
     }
   }
 
   private void loadKeyDetails() throws IOException {
+    // 定位到GlobalTrailerOffset,并读取出BlockCounts.
     int numBlocks = getBlockCount();
     logger_.debug("Number of blocks in file : " + numBlocks);
     long blockStart;
@@ -373,7 +385,7 @@ public class DMap {
     long prevBlockTrailerStart = -1;
 
     for(int blockCount = 0; blockCount < numBlocks; ++blockCount) {
-      //写入的顺序是BlockStart, BlockTrailer, firstKeyLen, firstKey
+      //写入的顺序对应DMapBuilder的step8:BlockStart, BlockTrailer, firstKeyLen, firstKey
       blockStart = raf_.readVLong();
       blockTrailerStart = raf_.readVLong();
       int firstKeySize = raf_.readVInt();
@@ -383,8 +395,18 @@ public class DMap {
       firstKeyInBlock_.put(new ByteArray(firstKeyBytes), blockStart);
       blockOffsetInfo_.put(blockStart, blockTrailerStart);
       //第一个数据块没有前面的数据块.所以第一个数据块不会调用processBlockTrailer
-      //以第二个数据块为例. 文件的格式为(数据块之间以|分隔):
-      //value1,value2,....key1,key2,...|value10,value11,...key10,key11
+      //Block-1|Block-1-Trailer|Block-2|Block-2-Trailer
+      //|      |prevBlockTrailerStart
+      //blockStart
+      //第二个数据块,blockCount=1. 文件的格式为(数据块之间以|分隔):
+      //Block-1|Block-1-Trailer|Block-2|Block-2-Trailer
+      //       |prevBlockTrailerStart
+      //                       |blockStart
+      //       |<------------->|
+      //         BlockTrailer to be processed. firstParam:prevBlockTrailerStart, secParam:trailerSize
+      // 因为第一次循环没有处理,第二次循环处理第一个BlockTrailer. 当到达最后一次循环时,处理的是倒数第二个BlockTrailer
+      // 所以在循环外面还需要最后一次处理,处理最后一个BlockTrailer.
+
       //prevBlockTrailerStart=key1'off, 当前第二个blockStart=value10'off
       //所以blockStart-prevBlockTrailerStart=前一个Block的key区间
       //因为第一个参数是prevBlockTrailerStart,即前一个Block的tailer=key1'off

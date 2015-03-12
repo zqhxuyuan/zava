@@ -1,0 +1,29 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
+
+	
+	<!-- 切换至高可用模式，只需要把broker的实现改为HaBroker配置 -->
+	<bean id="broker" class="org.zbus.client.broker.SingleBroker">
+		<constructor-arg>
+			<bean class="org.zbus.client.broker.SingleBrokerConfig">
+				<property name="brokerAddress" value="127.0.0.1:15555" />
+			</bean>
+		</constructor-arg>
+	</bean>
+	
+
+	<!-- 动态代理由RpcProxy的getService生成，需要知道对应的MQ配置信息（第二个参数） -->
+	<bean id="interface" class="org.zbus.client.rpc.RpcProxy" factory-method="getService">
+		<constructor-arg type="java.lang.Class" value="org.zbus.rpc.biz.Interface"/> 
+		<constructor-arg>
+			<bean class="org.zbus.client.rpc.RpcConfig">
+				<property name="broker" ref="broker"/> 
+				<property name="mq" value="MyRpc"/>
+			</bean>
+		</constructor-arg>
+	</bean>
+	
+</beans>

@@ -2,6 +2,7 @@
 .project
 .settings/
 target/
+build/
 .idea/
 *.iml
 *.iws

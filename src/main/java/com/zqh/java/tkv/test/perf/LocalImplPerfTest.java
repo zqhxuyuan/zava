@@ -5,6 +5,7 @@ package com.zqh.java.tkv.test.perf;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -25,23 +26,14 @@ public class LocalImplPerfTest {
 
 	private File dbFile;
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@Before
 	public void setUp() throws Exception {
 		dbFile = new File("/tmp/fkvtest.db");
@@ -49,9 +41,6 @@ public class LocalImplPerfTest {
 		fkv = new LocalImpl(dbFile);
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@After
 	public void tearDown() throws Exception {
 		fkv.close();
@@ -60,11 +49,6 @@ public class LocalImplPerfTest {
 
 	private int perfTimes = 100000;
 
-	/**
-	 * Test method for {@link com.zqh.java.tkv.LocalImpl#get(java.lang.String)}.
-	 * 
-	 * @throws IOException
-	 */
 	@Test
 	@Ignore
 	public void testPutDiffKeyWithoutTagsPerf() throws IOException {
@@ -74,13 +58,15 @@ public class LocalImplPerfTest {
 			fkv.put("" + (10000000 + i), value.getBytes());
 		}
 		System.out.println("testPutDiffKeyWithoutTagsPerf:" + (System.currentTimeMillis() - start));
+
+        HashMap map = new HashMap();
+        start = System.currentTimeMillis();
+        for (int i = 0; i < perfTimes; i++) {
+            map.put("" + (10000000 + i), value.getBytes());
+        }
+        System.out.println("testWithHashMap:" + (System.currentTimeMillis() - start));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.tkv.LocalImpl#get(java.lang.String)}.
-	 * 
-	 * @throws IOException
-	 */
 	@Test
 	@Ignore
 	public void testPutDiffKeyWithTagsPerf() throws IOException {

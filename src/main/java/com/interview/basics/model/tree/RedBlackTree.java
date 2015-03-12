@@ -75,74 +75,74 @@ public class RedBlackTree<T extends Comparable<T>> extends BinarySearchTree<T> {
         return fixUp((RedBlackTreeNode) node);
     }
 
-//    private RedBlackTreeNode<T> moveRedRight(RedBlackTreeNode<T> node) {
-//        if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
-//        if (node.left != null && node.isRed(node.left.left)) {
-//            node = node.rotateRight();
-//            if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
-//        }
-//        return node;
-//    }
-//
-//    @Override
-//    public void deleteMax() {
-//        root = deleteMax((RedBlackTreeNode) root);
-//        ((RedBlackTreeNode) root).color = RedBlackTreeNode.BLACK;
-//    }
-//
-//    protected RedBlackTreeNode deleteMax(RedBlackTreeNode<T> node) {
-//        if(node == null) return null;
-//        if (node.isRed(node.left))  node = node.rotateRight();
-//        if (node.right == null)     return (RedBlackTreeNode)node.left;
-//        if (!node.isRed(node.right) && !node.isRed(node.right.left))
-//            node = moveRedRight(node);
-//        node.left = deleteMax((RedBlackTreeNode)node.left);
-//        return fixUp(node);
-//    }
-//
-//    private RedBlackTreeNode moveRedLeft(RedBlackTreeNode node){
-//        if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
-//        if (node.right != null && node.isRed(node.right.left)){
-//            node.right = ((RedBlackTreeNode)node.right).rotateRight();
-//            node = node.rotateLeft();
-//            if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
-//        }
-//        return node;
-//    }
-//
-//    @Override
-//    public void deleteMin() {
-//        root = deleteMin((RedBlackTreeNode) root);
-//        ((RedBlackTreeNode) root).color = RedBlackTreeNode.BLACK;
-//    }
-//
-//    protected RedBlackTreeNode<T> deleteMin(RedBlackTreeNode<T> node) {
-//        if (node.left == null)  return (RedBlackTreeNode)node.right;
-//        if (!node.isRed(node.left) && node.left != null && !node.isRed(node.left.left))
-//            node = moveRedLeft(node);
-//        node.left = deleteMin((RedBlackTreeNode)node.left);
-//        return fixUp(node);
-//    }
-//
-//    @Override
-//    protected BinaryTreeNode<T> delete(BinaryTreeNode<T> node, T element) {
-//        if(node == null) return null;
-//        int cmp = node.value.compareTo(element);
-//        RedBlackTreeNode h = (RedBlackTreeNode)node;
-//        if (cmp > 0){
-//            if (!h.isRed(h.left) && !h.isRed(h.left.left))
-//                h = moveRedLeft(h);
-//            h.left = delete(h.left, element);
-//        } else {
-//            if (h.isRed(h.left)) h = moveRedRight(h);
-//            if (cmp == 0 && (h.right == null))   return null;
-//            if (!h.isRed(h.right) && !h.isRed(h.right.left))
-//                h = moveRedRight(h);
-//            if (cmp == 0){
-//                h.value = min(h.right);
-//                h.right = deleteMin((RedBlackTreeNode)h.right);
-//            }   else h.right = delete(h.right, element);
-//        }
-//        return fixUp(h);
-//    }
+    private RedBlackTreeNode<T> moveRedRight(RedBlackTreeNode<T> node) {
+        if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
+        if (node.left != null && node.isRed(node.left.left)) {
+            node = node.rotateRight();
+            if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
+        }
+        return node;
+    }
+
+    @Override
+    public void deleteMax() {
+        root = deleteMax((RedBlackTreeNode) root);
+        ((RedBlackTreeNode) root).color = RedBlackTreeNode.BLACK;
+    }
+
+    protected RedBlackTreeNode deleteMax(RedBlackTreeNode<T> node) {
+        if(node == null) return null;
+        if (node.isRed(node.left))  node = node.rotateRight();
+        if (node.right == null)     return (RedBlackTreeNode)node.left;
+        if (!node.isRed(node.right) && !node.isRed(node.right.left))
+            node = moveRedRight(node);
+        node.left = deleteMax((RedBlackTreeNode)node.left);
+        return fixUp(node);
+    }
+
+    private RedBlackTreeNode moveRedLeft(RedBlackTreeNode node){
+        if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
+        if (node.right != null && node.isRed(node.right.left)){
+            node.right = ((RedBlackTreeNode)node.right).rotateRight();
+            node = node.rotateLeft();
+            if (node.isRed(node.left) && node.isRed(node.right)) node.flipColors();
+        }
+        return node;
+    }
+
+    @Override
+    public void deleteMin() {
+        root = deleteMin((RedBlackTreeNode) root);
+        ((RedBlackTreeNode) root).color = RedBlackTreeNode.BLACK;
+    }
+
+    protected RedBlackTreeNode<T> deleteMin(RedBlackTreeNode<T> node) {
+        if (node.left == null)  return (RedBlackTreeNode)node.right;
+        if (!node.isRed(node.left) && node.left != null && !node.isRed(node.left.left))
+            node = moveRedLeft(node);
+        node.left = deleteMin((RedBlackTreeNode)node.left);
+        return fixUp(node);
+    }
+
+    @Override
+    protected BinaryTreeNode<T> delete(BinaryTreeNode<T> node, T element) {
+        if(node == null) return null;
+        int cmp = node.value.compareTo(element);
+        RedBlackTreeNode h = (RedBlackTreeNode)node;
+        if (cmp > 0){
+            if (!h.isRed(h.left) && !h.isRed(h.left.left))
+                h = moveRedLeft(h);
+            h.left = delete(h.left, element);
+        } else {
+            if (h.isRed(h.left)) h = moveRedRight(h);
+            if (cmp == 0 && (h.right == null))   return null;
+            if (!h.isRed(h.right) && !h.isRed(h.right.left))
+                h = moveRedRight(h);
+            if (cmp == 0){
+                h.value = min(h.right);
+                h.right = deleteMin((RedBlackTreeNode)h.right);
+            }   else h.right = delete(h.right, element);
+        }
+        return fixUp(h);
+    }
 }
