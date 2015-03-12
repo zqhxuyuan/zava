@@ -68,6 +68,7 @@ public class LocalImpl implements Tkv {
 		this.store = new RAFDataStore(dbFile);
 		this.keyValueIndex = new HashMap<String, IndexItem>();
 		this.tagListIndex = new HashMap<String, List<String>>();
+        //反序列化,如果已经存在的话,且文件中有数据.则构建keyValueIndex和tagListIndex
 		deserial();
 	}
 

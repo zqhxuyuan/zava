@@ -48,11 +48,6 @@ public class HdfsImpl implements Tkv {
 		this.setDataStore(new HdfsDataStore(fs, dataFilename));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#close()
-	 */
 	@Override
 	public void close() throws IOException {
 		try {
@@ -64,11 +59,6 @@ public class HdfsImpl implements Tkv {
 		}
 	}
 
-	/*
-	 * 
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#get(int)
-	 */
 	@Override
 	public byte[] get(int indexPos) throws IOException {
 		Meta meta = this.indexStore.getIndex(indexPos);
@@ -78,11 +68,6 @@ public class HdfsImpl implements Tkv {
 		return getValue(meta);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#get(java.lang.String)
-	 */
 	@Override
 	public byte[] get(String key) throws IOException {
 		Meta meta = getIndex(key);
@@ -92,11 +77,6 @@ public class HdfsImpl implements Tkv {
 		return getValue(meta);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#get(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public byte[] get(String key, String tag) throws IOException {
 		Meta meta = getIndex(key, tag);
@@ -110,31 +90,16 @@ public class HdfsImpl implements Tkv {
 		return dataStore;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#getIndex(int)
-	 */
 	@Override
 	public Meta getIndex(int indexPos) throws IOException {
 		return this.indexStore.getIndex(indexPos);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#getIndex(java.lang.String)
-	 */
 	@Override
 	public Meta getIndex(String key) throws IOException {
 		return this.indexStore.getIndex(key);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#getIndex(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public Meta getIndex(String key, String tag) throws IOException {
 		return this.indexStore.getIndex(key, tag);
@@ -144,11 +109,6 @@ public class HdfsImpl implements Tkv {
 		return indexStore;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#getRecord(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public Record getRecord(String key, String tag) throws IOException {
 		throw new UnsupportedOperationException();
@@ -197,11 +157,6 @@ public class HdfsImpl implements Tkv {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#put(java.lang.String, byte[])
-	 */
 	@Override
 	public boolean put(String key, byte[] value) throws IOException {
 		return this.put(key, value, (String[]) null);
@@ -234,11 +189,6 @@ public class HdfsImpl implements Tkv {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.dianping.com.zqh.java.tkv.test.hdfs.Tkv#size()
-	 */
 	@Override
 	public long size() throws IOException {
 		return this.indexStore.size();

@@ -92,36 +92,53 @@ public class DMap {
       throw new IOException("Invalid version of DMap file encountered. Please fix.");
     }
 
-    // Sorted first keys
+    // Sorted first keys: firstKey->blockStart
     firstKeyInBlock_ = new TreeMap<>();
+    // blockStartOffset->blockTrailerOffset
     blockOffsetInfo_ = new HashMap<>();
+    // without pre load key-offset, put BlockTrailer total to mem:<blockTrailerStartOffset, BlockTrailer>
     blockTrailerBuffer_ = new HashMap<>();
+    // BlockTrailerStartOffset map to <key, offset of value in current block>
     blockTrailerKeys = new HashMap<>();
 
     size = raf_.readInt();
     blockSize = raf_.readInt();
     valuesCompressed = raf_.readBool();
-    
+
     if (size == 0) {
       cachedByteBuffers_ = new CachingHashMap<>(0);
       return;
     }
-    
+
+    //加载BlockTrailer里的key->offset到内存中,如果设置了preloadAllKeyOffsets的话
+    //否则直接把BlockTrailer加载到内存中.这样在get(key)时,需要解析BlockTrailer信息
     loadKeyDetails();
 
+    //把value也加载到内存里.cachedByteBuffers_是每个Block的firstKey和整个数据块的内容的映射
     if (preloadAllValues) {
       int numBlocks = getBlockCount();
       // override the cacheBlockCount_
       cachedByteBuffers_ = new CachingHashMap<>(numBlocks);
       for(ByteArray firstKey : firstKeyInBlock_.keySet()) {
+        // firstKey --------------> blockStart ----------------> blockTrailerStart
+        //          firstKeyInBlock            blockOffsetInfo
+
+        //Block-A|Block-A-Trailer|Block-B|Block-B-Trailer
+        //|blockStart
+        //       |blockTrailerStart
+        //|<---->|
+        // mappedBuffer
         long blockStart = firstKeyInBlock_.get(firstKey);
         long blockTrailerStart = blockOffsetInfo_.get(blockStart);
+        //定位到blockStart位置,读取长度为blockTrailerStart-blockStart,即整个数据块的内容加载到内存中
         MappedByteBuffer mappedBuffer_ = raf_.map(MapMode.READ_ONLY, blockStart, blockTrailerStart - blockStart);
         mappedBuffer_.load();
+        //缓存里存放的是每个块的第一个firstKey和整个数据块的内容
         cachedByteBuffers_.put(firstKey, mappedBuffer_);
       }
       logger_.debug("Preloaded all " + numBlocks + " blocks.");
     } else
+      //如果没有事先加载,则先构建一个Map. 在get的时候再放入
       cachedByteBuffers_ = new CachingHashMap<>(cacheBlockCount_);
   }
 
@@ -230,18 +247,16 @@ public class DMap {
    * @return  byte[] associated with key.
    */
   public byte[] get(byte[] key) throws IOException {
-    if (size == 0)
-      return null;
+    if (size == 0) return null;
     
     ByteArray keyBytes = new ByteArray(key);
-    // logger_.debug("get(" + keyBytes + ") - hash: " + keyBytes.hashCode());
+    logger_.debug("get(" + keyBytes + ") - hash: " + keyBytes.hashCode());
     // identify the block containing the given key using first key information.
+    // firstKeys is settup at loadKeyDetails()
     ByteArray firstKeyBytes = ByteArrayUtils.findMaxElementLessThanTarget(firstKeys, keyBytes);
 
-    if(firstKeyBytes == null) {
-      // key not in range (less than start key)
-      return null;
-    }
+    // key not in range (less than start key)
+    if(firstKeyBytes == null) return null;
 
     //firstKey-->所在的Block的startOffset-->BlockTrailerOffset
     //要获取key对应的value, 首先要找到key对应的value,其中value在Block中的Offset, 这个信息记录在BlockTrailer里
@@ -249,9 +264,7 @@ public class DMap {
     long blockTrailerStart = blockOffsetInfo_.get(blockStart);
     // load the value offset
     int valueOffset = getValueOffset(keyBytes, blockTrailerStart);
-    if (valueOffset == troveNoEntryValue) {
-      return null;
-    }
+    if (valueOffset == troveNoEntryValue) return null;
 
     //缓存: 一整个Block的数据都缓存起来. 如果是顺序读的话,因为知道了Block的firstKey,
     //只要读取了Block的第一个key, 这个Block其余的key也都加载进内存中.而不必从文件中读取了
@@ -260,19 +273,21 @@ public class DMap {
       synchronized (cachedByteBuffers_) {
         blockMapBuffer = cachedByteBuffers_.get(firstKeyBytes);
         if (blockMapBuffer == null) {
-          //起始位置是BlockStart, 读取的数量=BlockTrailerOffset-BlockOffset=这个所有value的长度
+          //起始位置是BlockStart, 读取的数量=BlockTrailerOffset-BlockStartOffset=这个所有value的长度
           //|val1,val2,...|
           //|<BlockStart  |<BlockTrailerOffset
           //后者减去前者就是当前Block所有的value了
           blockMapBuffer = raf_.map(MapMode.READ_ONLY, blockStart, blockTrailerStart - blockStart);
           //缓存的key是Block的firstKey, 缓存的内容是这个Block的所有数据内容
+          //整个过程要做的工作和preloadAllValues=true时在构造函数里的工作一样.都是要加载整个数据块的内容到内存中
           cachedByteBuffers_.put(firstKeyBytes, blockMapBuffer);
         }
       }
     }
 
-    //上一步已经将当前Block放进内存中了,直接从内存中读取
+    //上一步已经将当前Block放进内存中了,现在要获取value的值,因为知道了value在Block中的offset,可以直接从内存中get出来
     ByteBuffer slice = blockMapBuffer.slice();
+    //定位到value所在的offset位置
     slice.position(valueOffset);
     //数据value的格式是valLen,然后是value,所以依次读取
     int valueLength = CompressionUtils.readVInt(slice);
@@ -285,28 +300,29 @@ public class DMap {
   }
 
   /* NOTE:
-   *
-   *    When Offset preloading is disabled, this method does a linear search over all the keys in the given block
+   * When Offset preloading is disabled, this method does a linear search over all the keys in the given block
    * to find the matching key and retrieve the value offset associated with the key.
-   *    Searching single block DMap contaning N keys will be slower than Searching M-Blocks DMap with each block containing
-   *    a subset of key.
+   * Searching single block DMap contaning N keys will be slower than Searching M-Blocks DMap
+   * with each block containing a subset of key.
    */
   private int getValueOffset(ByteArray keyBytes, Long blockTrailerStartOffset) throws IOException {
     int valueOffset = troveNoEntryValue;
+    //没有预加载key-offset的话,要从blockTrailerBuffer_中自己去解析出来
     if(!preloadAllKeyOffsets) {
       // time for linear search over the keys in block using mappedTrailer
+      // 现在trailerBuffer里放的是整个BlockTrailer的信息. 对应的内容就是DMapBuilder.updateBlockTrailer()
       ByteBuffer trailerBuffer = blockTrailerBuffer_.get(blockTrailerStartOffset).slice();
       // load key count - int
       int numKeysInBlock = CompressionUtils.readVInt(trailerBuffer);
 
-      // start search over keys
+      // start search over keys 循环当前BlockTrailer里的所有key,判断和要查询的keyBytes是否一样,查到则找到offset
       for(int count=0; count<numKeysInBlock; count++) {
         int keyLen = CompressionUtils.readVInt(trailerBuffer);
         byte[] currentkey = new byte[keyLen];
         trailerBuffer.get(currentkey);
         ByteArray currentKeyBytes = new ByteArray(currentkey);
         int offset = CompressionUtils.readVInt(trailerBuffer);
-        // logger_.debug("Comparing " + keyBytes + " and " + currentKeyBytes + " : " + keyBytes.compareTo(currentKeyBytes));
+        logger_.debug("Comparing " + keyBytes + " and " + currentKeyBytes + " : " + keyBytes.compareTo(currentKeyBytes));
         if(keyBytes.compareTo(currentKeyBytes) == 0) {
           valueOffset = offset;
           break;
@@ -334,12 +350,12 @@ public class DMap {
     return raf_.readLong();
   }
 
-    /**
-     *
-     * @param trailerStartOffset BlockTrailer的start-offset
-     * @param trailerSize 这个值的计算方式是下一个Block的start减去前一个Block的Trailer.
-     * @throws IOException
-     */
+  /**
+   *
+   * @param trailerStartOffset BlockTrailer的start-offset
+   * @param trailerSize 这个值的计算方式是下一个Block的start减去前一个Block的Trailer.
+   * @throws IOException
+   */
   private void processBlockTrailer(long trailerStartOffset, long trailerSize) throws IOException {
     //将BlockTrailer的内存都加载到内存中. BlockTrailer的信息是在DMapBuilder.updateBlockTrailer写入的
     //主要是要将key和value在Block中的offset映射起来. 这样根据key能找到offset,从而在Block的offset处开始读取结果数据
@@ -406,11 +422,6 @@ public class DMap {
       //         BlockTrailer to be processed. firstParam:prevBlockTrailerStart, secParam:trailerSize
       // 因为第一次循环没有处理,第二次循环处理第一个BlockTrailer. 当到达最后一次循环时,处理的是倒数第二个BlockTrailer
       // 所以在循环外面还需要最后一次处理,处理最后一个BlockTrailer.
-
-      //prevBlockTrailerStart=key1'off, 当前第二个blockStart=value10'off
-      //所以blockStart-prevBlockTrailerStart=前一个Block的key区间
-      //因为第一个参数是prevBlockTrailerStart,即前一个Block的tailer=key1'off
-      //所以processBlockTrailer实际上是处理前一个Block的key部分
       if(blockCount > 0) {
         // compute the previous block's trailer size and store the information
         processBlockTrailer(prevBlockTrailerStart, blockStart - prevBlockTrailerStart);
@@ -425,11 +436,8 @@ public class DMap {
   }
 
   /**
-   * This method returns an iterator for this DMap with 
-   * different implementations for different preload settings.
-   * 
+   * This method returns an iterator for this DMap with different implementations for different preload settings.
    * These iterators are NOT thread save.
-   * 
    * @return an iterator for the current dmap
    */
   public EntryIterator entryIterator() {
@@ -444,11 +452,17 @@ public class DMap {
     ByteBuffer curBuffer_;
     int curBlockKeyNum_;
     int curKey_;
-    
+
+    //如果没有预加载key-offset,则可用的是BlockTrailer的信息:blockTrailerBuffer_:<BlockTrailerOffset,BlockTrailer>
     private EntryIteratorWithoutPreloading() {
+      //the iterator of BlockTrailer. 用于迭代每个BlockTrailer
+      //next方法的迭代由用户控制,循环读取BlockTrailer的每一对信息
+      //实际上是否控制执行下一个BlockTrailer都是在next()方法中执行.
       blockIterator_ = blockTrailerBuffer_.values().iterator();
       if (blockIterator_.hasNext()) {
+        // current BlockTrailer
         curBuffer_ = blockIterator_.next().slice();
+        // the first data is the number of keys in this block/blockTrailer
         curBlockKeyNum_ = CompressionUtils.readVInt(curBuffer_);
       } else {
         curBuffer_ = null;
@@ -466,15 +480,21 @@ public class DMap {
     public Entry next() throws IOException {
       // TODO: make it more efficient if necessary
       if (curKey_++ < curBlockKeyNum_) {
+        // keyLen, key, offset
         int keyLen = CompressionUtils.readVInt(curBuffer_);
         byte[] key = new byte[keyLen];
         curBuffer_.get(key);
-        CompressionUtils.readVInt(curBuffer_);   // skip offset
+        // skip offset, 因为next循环要能够定位到每一个|keyLen,key,offset|的边界
+        CompressionUtils.readVInt(curBuffer_);
+        // Entry的两个参数分别是key和对应的value.
         return new Entry(key, get(key));
       } else if (blockIterator_.hasNext()) {
+        // 一个BlockTrailer已经读取完了.判断是否有下一个BlockTrailer,有的话,重置相关变量,下一次从if里执行
         curBuffer_ = blockIterator_.next().slice();
+        // 第一个BlockTrailer的这三个变量都在构造函数里,接下来的BlockTrailer在这里设置
         curBlockKeyNum_ = CompressionUtils.readVInt(curBuffer_);
         curKey_ = 0;
+        // 递归调用.
         return next();
       } else 
         return null;
@@ -485,7 +505,8 @@ public class DMap {
     Iterator<TObjectIntHashMap<ByteArray>> blockIterator_;
     Iterator<ByteArray> keyIterator_;
     Entry nextEntry;
-    
+
+    // 如果预加载了key-offset,则从blockTrailerKeys中获取:<BlockTrailerOffset,<key,offset>>
     private EntryIteratorForPreloadedKeys() {
       blockIterator_ = blockTrailerKeys.values().iterator();
       if (blockIterator_.hasNext()) {
@@ -513,13 +534,18 @@ public class DMap {
     
     private Entry getNextEntry() throws IOException {
       // TODO: make it more efficient if necessary
+      // 当前BlockTrailer里的key->offset的迭代
       if (keyIterator_ != null && keyIterator_.hasNext()) {
         ByteArray key = keyIterator_.next();
         return new Entry(key.getBytes(), get(key.getBytes()));
       }
+      //当前BlockTrailer里的List都读取完了,读取下一个BlockTrailer
+      //因为blockTrailerKeys放的是BlockTrailerOffset和key->offset的映射.
+      //if里执行的是key->offset的迭代
       while (blockIterator_.hasNext()) {
         keyIterator_ = blockIterator_.next().keySet().iterator();
         if (keyIterator_.hasNext())
+          //还是递归调用. 一个BlockTrailer读取完毕,要接着下一个BlockTrailer里的key->offset
           return getNextEntry();
       }
       return null;
