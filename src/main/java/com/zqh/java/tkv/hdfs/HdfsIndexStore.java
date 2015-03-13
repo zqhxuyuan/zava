@@ -30,7 +30,9 @@ public class HdfsIndexStore implements IndexStore {
 
 	public HdfsIndexStore(FileSystem fs, String hdfsFilename, File localFile, int keyLength, int tagLength) throws IOException {
 		this.fs = fs;
+        //本地磁盘索引文件的存储方式是RAFIndexStore.
 		this.localIndexStore = new RAFIndexStore(localFile, keyLength, tagLength);
+        //还要在HDFS中存储一份.注意本地和HDFS的文件名是一样的,因为localFile的名称和这里的hdfsFilename一样
 		this.path = new Path(fs.getWorkingDirectory(), hdfsFilename);
 	}
 
@@ -73,8 +75,11 @@ public class HdfsIndexStore implements IndexStore {
 	@Override
 	public void flush() throws IOException {
 		this.localIndexStore.flush();
+        //本地磁盘文件
 		InputStream input = this.localIndexStore.getInputStream();
+        //HDFS文件
 		OutputStream output = fs.create(path);
+        //拷贝本地文件到HDFS上
 		IoKit.copyAndClose(input, output);
 	}
 

@@ -51,6 +51,7 @@ public class HdfsDataStore implements DataStore {
 		}
 	}
 
+    //不支持随机写,只支持顺序写
 	@Override
 	public void append(long offset, byte[] bytes) throws IOException {
 		throw new UnsupportedOperationException("Hdfs unsupport random write!");
@@ -103,6 +104,7 @@ public class HdfsDataStore implements DataStore {
 		}
 	}
 
+    //随机读是支持的
 	@Override
 	public byte[] get(long offset, int length) throws IOException {
 		FSDataInputStream in = this.input;

@@ -30,9 +30,6 @@ public class HdfsImplTest extends StoreTestHelper {
 		hdfs = new HdfsImpl(localHdfsDir, super.localDir, localIndexFile.getName(), localDataFile.getName(), 64, 100);
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@After
 	public void tearDown() throws Exception {
 		hdfs.close();
