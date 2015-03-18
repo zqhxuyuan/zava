@@ -1,3 +1,5 @@
+package base;
+
 import java.util.HashMap;
 
 import static org.junit.Assert.assertNull;

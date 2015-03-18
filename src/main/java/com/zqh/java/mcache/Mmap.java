@@ -11,13 +11,13 @@ public class Mmap {
 
     private static final long MAX_FILE_SIZE = 0x7FFFFFFF; // 单个数据文件最大支持2G
 
-    private MmapFile indexFile;
-    private MemIndexMap indexMap;
-    private MmapFile[] dataFiles;
-    private ByteBuffer[] dataBuffers;
-    private int dataNumOfOneFile;
-    private int dataFileNum;
-    private int dataSize;
+    private MmapFile indexFile;         //索引文件
+    private MemIndexMap indexMap;       //内存索引
+    private MmapFile[] dataFiles;       //数据文件,多个
+    private ByteBuffer[] dataBuffers;   //数据内存缓冲区
+    private int dataNumOfOneFile;       //每个文件的数据量
+    private int dataFileNum;            //数据文件数量
+    private int dataSize;               //数据大小
 
     private String statFile;
     private long statLastRecordTime;

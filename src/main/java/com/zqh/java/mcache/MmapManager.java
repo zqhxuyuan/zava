@@ -28,11 +28,9 @@ public class MmapManager {
     private int dataNumOfOneFile;
     private int dataFileNum;
 
-    public MmapManager(String fileName, int dataNum, int dataSize)
-            throws MmapException, IOException {
+    public MmapManager(String fileName, int dataNum, int dataSize) throws MmapException, IOException {
         if (dataNum <= 0 || dataSize <= 0)
-            throw new IllegalArgumentException("argument err. dataNum:"
-                    + dataNum + ", dataSize:" + dataSize);
+            throw new IllegalArgumentException("argument err. dataNum:" + dataNum + ", dataSize:" + dataSize);
 
         this.fileName = fileName;
         this.dataNum = dataNum;
@@ -56,8 +54,7 @@ public class MmapManager {
             size += left;
             this.dataNum++;
         }
-        System.out.println("dataFileNum:" + dataFileNum + ", dataNumOfOneFile:"
-                + dataNumOfOneFile);
+        System.out.println("dataFileNum:" + dataFileNum + ", dataNumOfOneFile:" + dataNumOfOneFile);
 
         this.dataFiles = new MmapFile[dataFileNum];
         dataBuffers = new ByteBuffer[dataFileNum];
@@ -68,8 +65,7 @@ public class MmapManager {
             if (i == dataFileNum - 1) {
                 dataFiles[i] = new MmapFile(f, (int) lastFileSize);
             } else {
-                dataFiles[i] = new MmapFile(f, this.dataSize
-                        * this.dataNumOfOneFile);
+                dataFiles[i] = new MmapFile(f, this.dataSize * this.dataNumOfOneFile);
             }
             dataBuffers[i] = dataFiles[i].getBuffer();
         }
@@ -92,44 +88,37 @@ public class MmapManager {
      */
     public ByteBuffer getDataBuffer(int idx) {
         if (idx > dataNum) {
-            throw new IllegalArgumentException("idx[" + idx + "] > dataNum["
-                    + dataNum + "]");
+            throw new IllegalArgumentException("idx[" + idx + "] > dataNum[" + dataNum + "]");
         }
         int pos = idx + 1;
-        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile]
-                .duplicate();
+        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
         tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize);
         tmpBuffer.limit((pos % this.dataNumOfOneFile + 1) * dataSize);
         return tmpBuffer.slice();
     }
 
     public byte[] getNotExpiredData(int pos, int expireTime) {
-        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile]
-                .duplicate();
+        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
         tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize);
         tmpBuffer.limit((pos % this.dataNumOfOneFile) + 12);
         long id = tmpBuffer.slice().asLongBuffer().get(0);
         int len = tmpBuffer.slice().asIntBuffer().get(2);
 
-        if (id == 0)
-            return null;
+        if (id == 0) return null;
 
-        ByteBuffer _tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile]
-                .duplicate();
+        ByteBuffer _tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
         _tmpBuffer.position((pos % this.dataNumOfOneFile + 1) * dataSize - 4);
         _tmpBuffer.position((pos % this.dataNumOfOneFile + 1) * dataSize);
         int time = _tmpBuffer.slice().asIntBuffer().get(0);
 
-        if (time < expireTime)
-            return null;
+        if (time < expireTime) return null;
 
         tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
         tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize + 12);
         tmpBuffer.limit((pos % this.dataNumOfOneFile) * dataSize + 12 + len);
         ByteBuffer bb = tmpBuffer.slice();
 
-        if (bb == null)
-            return null;
+        if (bb == null) return null;
 
         byte[] bytes = new byte[bb.capacity()];
         bb.slice().get(bytes);
@@ -143,13 +132,10 @@ public class MmapManager {
         int indexSize = MemIndexMap.calSize(hashNum, conflictNum, dataNum);
         File f = new File(fileName + ".idx");
         if (f.exists())
-            throw new MmapException(
-                    "MmapManager rebuild index failed: index file[" + fileName
-                            + ".idx] exists.");
+            throw new MmapException("MmapManager rebuild index failed: index file[" + fileName + ".idx] exists.");
         MmapFile indexFile = new MmapFile(f, indexSize);
         ByteBuffer buffer = indexFile.getBuffer();
-        MemIndexMap indexMap = new MemIndexMap(buffer, indexSize, hashNum,
-                conflictNum, dataNum, dataSize, true);
+        MemIndexMap indexMap = new MemIndexMap(buffer, indexSize, hashNum, conflictNum, dataNum, dataSize, true);
 
         long startTime = System.currentTimeMillis();
         System.out.println("rebuild index start at: " + startTime);
@@ -192,11 +178,9 @@ public class MmapManager {
         System.out.println(indexMap.toString());
     }
 
-    public void modifyDataFile(String newFileName, int newDataNum,
-                               int newDataSize) throws MmapException, IOException {
+    public void modifyDataFile(String newFileName, int newDataNum, int newDataSize) throws MmapException, IOException {
         if (newDataNum <= 0 && newDataSize <= 0)
-            throw new IllegalArgumentException("argument err. newDataNum:"
-                    + newDataNum + ", newDataSize:" + newDataSize);
+            throw new IllegalArgumentException("argument err. newDataNum:" + newDataNum + ", newDataSize:" + newDataSize);
 
         long startTime = System.currentTimeMillis();
         System.out.println("rebuild index start at: " + startTime);
@@ -204,8 +188,7 @@ public class MmapManager {
         newDataSize = newDataSize + 16;
         int newDataNumOfOneFile = (int) (MAX_FILE_SIZE / newDataSize);
 
-        ByteBuffer[] newDataBuffers = createNewFiles(newFileName, newDataNum,
-                newDataSize);
+        ByteBuffer[] newDataBuffers = createNewFiles(newFileName, newDataNum, newDataSize);
 
         int _num = dataNum > newDataNum ? newDataNum : dataNum;
         int _size = dataSize > newDataSize ? newDataSize : dataSize;
@@ -216,8 +199,7 @@ public class MmapManager {
         for (int i = 1; i <= dataNum; i++) {
             if (idx > _num) {
                 if (i < dataNum)
-                    System.out
-                            .println("newDataNum < dataNum, maybe not deal over.");
+                    System.out.println("newDataNum < dataNum, maybe not deal over.");
                 break;
             }
             _buffer = dataBuffers[i / dataNumOfOneFile].duplicate();
@@ -241,15 +223,13 @@ public class MmapManager {
         }
 
         long endTime = System.currentTimeMillis();
-        System.out.println("modifyDataFile succ. use " + (endTime - startTime)
-                + " ms");
+        System.out.println("modifyDataFile succ. use " + (endTime - startTime) + " ms");
         System.out.println("oldNum=" + dataNum + ", oldSize=" + dataSize
                 + ", newNum=" + newDataNum + ", newSize=" + newDataSize
                 + " ,usedNum=" + usedNum + " ,rebuildNum=" + rebuildNum);
     }
 
-    private ByteBuffer[] createNewFiles(String newFileName, int newDataNum,
-                                        int newDataSize) throws MmapException, IOException {
+    private ByteBuffer[] createNewFiles(String newFileName, int newDataNum, int newDataSize) throws MmapException, IOException {
         MmapFile[] newDataFiles;
         ByteBuffer[] newDataBuffers;
         long newTotalSize = 1L * (newDataNum + 1) * newDataSize;
@@ -270,21 +250,18 @@ public class MmapManager {
             newSize += left;
             newDataFileNum++;
         }
-        System.out.println("NewFileNum: " + newDataFileNum
-                + ", newDataNumOfOneFile: " + newDataNumOfOneFile);
+        System.out.println("NewFileNum: " + newDataFileNum + ", newDataNumOfOneFile: " + newDataNumOfOneFile);
 
         newDataFiles = new MmapFile[newDataFileNum];
         newDataBuffers = new ByteBuffer[newDataFileNum];
         for (int i = 0; i < dataFileNum; i++) {
             File f = new File(newFileName + ".dat" + i);
             if (f.exists())
-                throw new MmapException(newFileName + ".dat" + i
-                        + " is aready exists.");
+                throw new MmapException(newFileName + ".dat" + i + " is aready exists.");
             if (i == newDataFileNum - 1) {
                 newDataFiles[i] = new MmapFile(f, (int) newLastFileSize);
             } else {
-                newDataFiles[i] = new MmapFile(f, newDataNumOfOneFile
-                        * newDataSize);
+                newDataFiles[i] = new MmapFile(f, newDataNumOfOneFile * newDataSize);
             }
             newDataBuffers[i] = newDataFiles[i].getBuffer();
         }
