@@ -46,9 +46,6 @@ public class FkvPerfTest {
 
 	private int perfTimes = 20 * 10000;
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 */
 	@Test
 	public void testPutSameKeyPerf() {
 		String key = "01234567";
@@ -60,9 +57,6 @@ public class FkvPerfTest {
 		System.out.println("testPutSameKeyPerf:" + (System.currentTimeMillis() - start));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 */
 	@Test
 	public void testPutDiffKeyPerf() {
 		String value = "0123456789";
@@ -73,9 +67,6 @@ public class FkvPerfTest {
 		System.out.println("testPutDiffKeyPerf:" + (System.currentTimeMillis() - start));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 */
 	@Test
 	public void testGetSameKeyPerf() {
 		String key = "01234567";
@@ -86,9 +77,6 @@ public class FkvPerfTest {
 		System.out.println("testGetSameKeyPerf:" + (System.currentTimeMillis() - start));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 */
 	@Test
 	public void testPutDeletePerf() {
 		String key = "01234567";

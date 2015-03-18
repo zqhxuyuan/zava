@@ -1,0 +1,67 @@
+package com.taobao.inventory.common.command;
+
+import java.lang.reflect.Modifier;
+import java.util.Set;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+
+import com.alibaba.common.lang.StringUtil;
+import com.taobao.inventory.misc.command.Catalog;
+import com.taobao.inventory.misc.command.Command;
+import com.taobao.inventory.util.ClassUtil;
+
+/**
+ * Spring容器自动装载Command对象
+ * 
+ * @author: lanbo <br>
+ * @version: 1.0 <br>
+ * @date: 2012-5-15
+ */
+public class CommandLoader implements BeanFactoryPostProcessor {
+
+	// private Logger logger = LoggerFactory.getLogger(getClass());
+
+	private static final String	COM_TAOBAO_INVENTORY	= "com.taobao.inventory.manager.withhold";
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		if (beanFactory instanceof BeanDefinitionRegistry) {
+			Set<Class<?>> classes = ClassUtil.getClasses(COM_TAOBAO_INVENTORY, true);
+			for (Class<?> clazz : classes) {
+				if (Modifier.isAbstract(clazz.getModifiers()))
+					continue;
+
+				if (Command.class.isAssignableFrom(clazz)) {
+					// logger.warn("Load a Command [" + clazz + "]");
+					System.out.println("Load a Command [" + clazz + "]");
+
+					registerBean(beanFactory, clazz, false);
+				}
+
+				else if (Catalog.class.isAssignableFrom(clazz)) {
+					// logger.warn("Load a Catalog [" + clazz + "]");
+					System.out.println("Load a Catalog [" + clazz + "]");
+
+					registerBean(beanFactory, clazz, true);
+				}
+			}
+		}
+	}
+
+	private void registerBean(ConfigurableListableBeanFactory beanFactory, Class<?> clazz, boolean init) {
+		BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+		RootBeanDefinition definition = new RootBeanDefinition(clazz);
+		definition.setScope(ConfigurableBeanFactory.SCOPE_SINGLETON);
+		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_AUTODETECT);
+		
+		if (init) definition.setInitMethodName("init");
+
+		registry.registerBeanDefinition(StringUtil.uncapitalize(clazz.getSimpleName()), definition);
+	}
+}

@@ -1,4 +1,5 @@
 使用Non-Heap Memory存储key,value，降低使用大内存对gc的压力
+====
 
 https://github.com/believe3301/NonHeapDB
 
@@ -13,16 +14,20 @@ feature
 design
 ----------
 
-1. 记录的key/value存储在Non-Heap区域，记录的索引以及空闲块的管理结构储存在Heap区域。
-2. Non-Heap区域按照固定大小（例如32m）分块, 如果最后的空闲块放不下当前的记录则会生成新的block
-3. 空闲块管理按照block进行管理, 每个块的空闲块以大小从小到大有序排列, 空闲块按照bestfit进行分配, 空闲块超过记录太大了则会进行分裂，但相邻的空闲块不会进行合并，只有在整理的时候才会进行合并。
-4. 记录的索引记录为long类型，其中的格式为（block size (2byte) | block index (2byte) | block offset (4byte))，在Heap上分配固定大小的数组，按照hash取模的方式进行储存，其中冲突通过linkedlist解决, 其中冲突链表存储在Non Heap区域
-5. 记录插入过程如下:  1）根据记录的大小迭代查询每个block是否有空闲块可以适合当前大小的记录，如果存在就使用，如果太大了就会进行空闲块的拆分.如果不存在适合的空闲块，则将记录append到最后的block
-                      2) 如果块的及
-                      2）将记录拷贝到block
-                      3) 将索引添加到数组里
-6. 记录查找过程如下:  1) 根据key值hash取模获取索引链表
-                      2) 在索引链表里迭代获取记录，比对key值，相同的则返回value
+1. 记录的key/value存储在Non-Heap区域[MemoryBuffer]，记录的索引以及空闲块的管理结构储存在Heap区域[MemoryManager:MM]。
+2. Non-Heap区域按照固定大小（例如32m）分块[MM.newBuffer], 如果最后的空闲块放不下当前的记录则会生成新的block[MM.getMemoryBuffer]
+3. 空闲块管理按照block进行管理, 每个块的空闲块以大小从小到大有序排列, 空闲块按照bestfit进行分配,
+   空闲块超过记录太大了则会进行分裂，但相邻的空闲块不会进行合并，只有在整理的时候才会进行合并。
+4. 记录的索引记录[RecordIndex]为long类型[getBucket]，其中的格式为（block size (2byte) | block index (2byte) | block offset (4byte))，
+   在Heap上分配固定大小的数组[BucketManager]，按照hash取模的方式进行储存，其中冲突通过linkedlist解决, 冲突链表存储在Non Heap区域
+5. 记录插入过程如下[MM.put]:
+    1）根据记录的大小迭代查询每个block是否有空闲块可以适合当前大小的记录，如果存在就使用，
+       如果太大了就会进行空闲块的拆分.如果不存在适合的空闲块，则将记录append到最后的block
+    2) 将记录拷贝到block
+    3) 将索引添加到数组里: map.setBucket(key, ridx.getBucket())
+6. 记录查找过程如下[MM.getRecord]:
+    1) 根据key值hash取模获取索引链表
+    2) 在索引链表里迭代获取记录，比对key值，相同的则返回value
 
 7. 记录在Non-Heap的格式如下:
 

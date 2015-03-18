@@ -29,16 +29,12 @@ import com.zqh.java.kvstore.structures.btree.BplusTree.TreeEntry;
 public class Example {
 	private static final String btreeFile = "/tmp/test";
 
-	//
 	public static void main(final String[] args) throws Exception {
 		final int[] keys = new int[] { 5, 7, -11, 111, 0 };
-		//
 		KVStoreFactory<IntHolder, IntHolder> factory = new KVStoreFactory<IntHolder, IntHolder>(
 				IntHolder.class, IntHolder.class);
-		Options opts = factory.createTreeOptionsDefault()
-				.set(KVStoreFactory.FILENAME, btreeFile);
+		Options opts = factory.createTreeOptionsDefault().set(KVStoreFactory.FILENAME, btreeFile);
 		BplusTreeFile<IntHolder, IntHolder> tree = factory.createTreeFile(opts);
-		//
 		// Open & Recovery tree if needed
 		try {
 			if (tree.open())
@@ -65,15 +61,13 @@ public class Example {
 		// ============== REMOVE
 		tree.remove(IntHolder.valueOf(7));
 		// ============== ITERATOR
-		for (Iterator<TreeEntry<IntHolder, IntHolder>> i = tree.iterator(); i
-				.hasNext();) {
+		for (Iterator<TreeEntry<IntHolder, IntHolder>> i = tree.iterator(); i.hasNext();) {
 			TreeEntry<IntHolder, IntHolder> e = i.next();
 			System.out.println("Key=" + e.getKey() + " Value=" + e.getValue());
 		}
 		// ============== FIRST / LAST
 		System.out.println("tree.firstKey()=" + tree.firstKey());
 		System.out.println("tree.lastKey()=" + tree.lastKey());
-		//
 		tree.sync();
 		tree.close();
 	}

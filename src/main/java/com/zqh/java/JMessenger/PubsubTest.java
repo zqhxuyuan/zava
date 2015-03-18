@@ -17,11 +17,13 @@ public class PubsubTest
     public static class FoodSubscriber implements Pubsub.Listener
     {
 
+        //FoodSubscriber订阅了TOPIC_FOOD这个主题
         public void subscribe()
         {
             pubsub.addListener(TOPIC_FOOD, this);
         }
 
+        //当TOPIC_FOOD这种类型的事件到来时,FoodSubscriber订阅者就会收到消息
         @Override
         public void onEventReceived(String type, Object object)
         {
@@ -79,12 +81,15 @@ public class PubsubTest
 
     public static void main(String[] args)
     {
+        //订阅消息
         FoodSubscriber fs = new FoodSubscriber();
         ElectronicsSubscriber es = new ElectronicsSubscriber();
         GeneralSubscriber gs = new GeneralSubscriber();
         fs.subscribe();
         es.subscribe();
         gs.subscribe();
+
+        //发布消息
         int numThreads = 10;
         ExecutorService ex = Executors.newFixedThreadPool(numThreads);
         for (int i = 0; i < numThreads; i++)
@@ -99,6 +104,7 @@ public class PubsubTest
                     {
                         int val = r.nextInt(4);
                         String topic = getRandomTopic(val);
+                        //随机产生一个topic,并往这个topic发送一条消息.
                         pubsub.publish(topic, topic + "-" + j);
                     }
                 }

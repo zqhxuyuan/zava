@@ -8,13 +8,14 @@ import com.zqh.java.FLRMI.FLRMIAL.ServiceCenter;
 
 /**
  * 实现服务中心
+ * 底层就是一个Map, 注册过程就是put进map, 获取服务就是从map中get
  *
  * @author fengjing.yfj
  * @version $Id: ServiceCenterImpl.java, v 0.1 2014年1月27日 下午5:35:41 fengjing.yfj Exp $
  */
 public class ServiceCenterImpl implements ServiceCenter {
 
-    /** 所有的服务 */
+    /** 所有的服务: <PREFIX, <serviceName, serviceObject>> */
     private static final Map<String, Map<Object, Object>> services            = new HashMap<String, Map<Object, Object>>();
 
     /** 单例 */

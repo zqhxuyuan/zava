@@ -87,10 +87,8 @@ public class MmapTest {
         }
         long endTime = System.currentTimeMillis();
         System.out.println("stop at:" + endTime);
-        System.out.println("test " + testNum + ", use " + (endTime - startTime)
-                + "ms, " + (testNum * 1000 / (endTime - startTime) + "/s"));
-        System.out.println("full count:" + fullCount + ",t1:" + c1 + ",t2:"
-                + c2 + ",t3:" + c3);
+        System.out.println("test " + testNum + ", use " + (endTime - startTime) + "ms, " + (testNum * 1000 / (endTime - startTime) + "/s"));
+        System.out.println("full count:" + fullCount + ",t1:" + c1 + ",t2:" + c2 + ",t3:" + c3);
         System.out.println(mmap);
     }
 
@@ -159,10 +157,8 @@ public class MmapTest {
         }
         long endTime = System.currentTimeMillis();
         System.out.println("stop at:" + endTime);
-        System.out.println("test " + testNum + ",use " + (endTime - startTime)
-                + "ms, " + (testNum / ((endTime - startTime) / 1000)) + "/s");
-        System.out.println("full count:" + fullCount + ",t1:" + c1 + ",t2:"
-                + c2);
+        System.out.println("test " + testNum + ",use " + (endTime - startTime) + "ms, " + (testNum / ((endTime - startTime) / 1000)) + "/s");
+        System.out.println("full count:" + fullCount + ",t1:" + c1 + ",t2:" + c2);
         System.out.println(mmap);
     }
 

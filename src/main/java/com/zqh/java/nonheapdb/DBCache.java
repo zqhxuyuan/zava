@@ -1,6 +1,7 @@
 package com.zqh.java.nonheapdb;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DBCache {
 
@@ -95,9 +96,9 @@ public class DBCache {
 				this.manager.dfcount()));
 		return sb.toString();
 	}
-	
+
+    //不考虑hash冲突的Map桶策略
 	public static class BucketManager {
-		
 		private int capacity;
 		private long[] buckets;
 		
@@ -105,9 +106,13 @@ public class DBCache {
 			this.capacity = 1 << hashpower;
 			this.buckets = new long[this.capacity];
 		}
-		
+
+        //根据key获取在哪个buckets桶里
 		private int getPos(String key) {
 			int h = key.hashCode();
+            //0x7FFFFFFF=0111 1111 | 1111 1111 | 1111 1111 | 1111 1111
+            //key进行hash之后是int类型=4个字节=4*8=32位
+            //为什么最高位不是F,而是7? 因为这个数字就是Integer.MAX_VALUE
 			return (h & 0x7FFFFFFF) % capacity;
 		}
 		
@@ -116,22 +121,27 @@ public class DBCache {
 		}
 		
 		public void setBucket(String key, long index) {
-			 buckets[getPos(key)] = index;
+            //会不会有冲突呢? getPos(key)对于不同的key可能会落到同一个bucket中
+            //index是什么值: RecordIndex.getBucket()的值.
+            //实际上代表了RecordIndex这个对象! 它封装了一条记录的index(在哪个内存块里),capacity(容量),offset(在内存块里的偏移量)
+            //解决冲突的方式是通过Record parent字段. --> MemeoryManager.getRecord()调用了Record.setParent
+
+            //setBucket保存的是最近放入的key的RecordIndex.getBucket()的值. 如果这个bucket先前有数据,也会覆盖.
+			buckets[getPos(key)] = index;
 		}
 	}
 
-	/*
-	static class BucketManager {
+	//解决有冲突的buckets. 使用二维数组
+	static class BucketManager2 {
 		private long[][] segments;
 		private int capacity;
 		private final ReentrantReadWriteLock[] segmentLocks = new ReentrantReadWriteLock[16];
-		{
+        {
 			for (int i = 0; i < 16; i++)
 				segmentLocks[i] = new ReentrantReadWriteLock();
 		}
 
-		public BucketManager(int hashpower) {
-
+		public BucketManager2(int hashpower) {
 			hashpower = Math.max(hashpower, 12);
 			this.capacity = 1 << (hashpower - 4);
 			this.segments = new long[16][];
@@ -174,7 +184,7 @@ public class DBCache {
 			}
 		}
 	}
-	*/
+
 
 	static class Metrics {
 		private AtomicInteger gethits;

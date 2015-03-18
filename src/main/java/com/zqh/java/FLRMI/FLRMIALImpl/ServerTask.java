@@ -43,8 +43,7 @@ public class ServerTask implements Runnable {
                 ServiceFinder finder = TargetFinderCenter.getFinder(messageMeta.getTarget());
                 //服务查找器还没有注册
                 if (finder == null) {
-                    throw new FLRMIException("在服务查找中心TargetFindCenter没有获取到["
-                            + messageMeta.getTarget() + "]的服务查找器");
+                    throw new FLRMIException("在服务查找中心TargetFindCenter没有获取到[" + messageMeta.getTarget() + "]的服务查找器");
                 }
                 //获取服务
                 Object service = finder.getService(messageMeta.getTarget());

@@ -2,9 +2,9 @@
 
 https://github.com/ggrandes/kvstore
 
-KVStore is a Key-Value Store for Memory & Disk (for BplusTree on disk, keys and values must be fixed length) for Java. Project is Open source (Apache License, Version 2.0) 
-
+KVStore is a Key-Value Store for Memory & Disk (for BplusTree on disk, keys and values must be fixed length) for Java.
 API is similar to [TreeMap](http://docs.oracle.com/javase/6/docs/api/java/util/TreeMap.html).
+存储在磁盘是通过B+树, key和value的长度必须是固定的.
 
 ### Current Stable Version is [1.0.0](https://search.maven.org/#search|ga|1|g%3Aorg.javastack%20a%3Akvstore)
 
@@ -25,16 +25,13 @@ import BplusTreeFile;
 public class Example {
 	private static final String btreeFile = "/tmp/test";
 
-	//
 	public static void main(final String[] args) throws Exception {
 		final int[] keys = new int[] { 5, 7, -11, 111, 0 };
-		//
 		KVStoreFactory<IntHolder, IntHolder> factory = new KVStoreFactory<IntHolder, IntHolder>(
 				IntHolder.class, IntHolder.class);
 		Options opts = factory.createTreeOptionsDefault()
 				.set(KVStoreFactory.FILENAME, btreeFile);
 		BplusTreeFile<IntHolder, IntHolder> tree = factory.createTreeFile(opts);
-		//
 		// Open & Recovery tree if needed
 		try {
 			if (tree.open())

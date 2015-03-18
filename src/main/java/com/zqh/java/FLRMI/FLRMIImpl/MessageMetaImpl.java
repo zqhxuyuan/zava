@@ -29,7 +29,7 @@ public class MessageMetaImpl implements MessageMeta {
     private Object                params[];
 
     /** 序列化方法 */
-    private SerizableMessageMeta serizableMessageMeta;
+    private SerizableMessageMeta  serizableMessageMeta;
 
     /** 默认的序列化方法列表 */
     private static final String[] SE_MESSAGE_METAS = new String[] {

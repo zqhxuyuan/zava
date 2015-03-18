@@ -53,9 +53,6 @@ public class FkvImplTest {
 		dbFile.delete();
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 */
 	@Test
 	public void testPut() {
 		String key = "01234567";
@@ -78,9 +75,6 @@ public class FkvImplTest {
 		Assert.assertEquals(value2, fkv.get(key));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#delete(java.lang.String)}.
-	 */
 	@Test
 	public void testDelete() {
 		String key = "01234567";
@@ -94,9 +88,6 @@ public class FkvImplTest {
 		Assert.assertNull(fkv.get(key));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#delete(java.lang.String)}.
-	 */
 	@Test
 	public void testClear() {
 		String key = "01234567";
@@ -106,11 +97,6 @@ public class FkvImplTest {
 		Assert.assertNull(fkv.get(key));
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 * 
-	 * @throws IOException
-	 */
 	@Test
 	public void testDeserial() throws IOException {
 		String key = "01234567";
@@ -139,11 +125,6 @@ public class FkvImplTest {
 		Assert.assertEquals(0, fkv.getDeletedSize());
 	}
 
-	/**
-	 * Test method for {@link com.zqh.java.fkv.FkvImpl#get(java.lang.String)}.
-	 * 
-	 * @throws IOException
-	 */
 	@Test
 	public void testPutDeleteInOneRecordSize() throws IOException {
 		String key = "01234567";

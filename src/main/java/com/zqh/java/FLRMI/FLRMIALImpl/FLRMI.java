@@ -32,6 +32,10 @@ public abstract class FLRMI {
         //调用服务
         return getService(target, host, port, interfaces);
     }
+    public static Object getFLRMIService(String serviceName, Class<?> interfaces[]) {
+        return getFLRMIService(serviceName,"localhlost",FLRMIServer.DEFAULT_FL_RMI_PORT,interfaces);
+    }
+
 
     /**
      * 这是一种通用的服务

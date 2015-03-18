@@ -43,6 +43,7 @@ public class FkvFileStore implements FkvStore {
 		} else {
 			this.needDeserial = true;
 		}
+        //文件提供了内存的持久化方式,否则内存中的数据一旦丢失,则数据无法恢复
 		buffer = ch.map(FileChannel.MapMode.READ_WRITE, 0, mappedSize);
 	}
 
@@ -57,6 +58,7 @@ public class FkvFileStore implements FkvStore {
 		this.buffer.get(bytes);
 	}
 
+    // 对于文件而言, 获取出的数据都是二进制的字节数组! 客户端实现类要自己将二进制转换成自定义对象
 	@Override
 	public byte[] get(int startIndex, int size) {
 		byte[] value = new byte[size];

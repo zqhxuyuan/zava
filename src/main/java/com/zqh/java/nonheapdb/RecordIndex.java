@@ -4,22 +4,26 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class RecordIndex implements Comparable<RecordIndex>, Comparator<RecordIndex> {
-	
-	
-	private short index; 	// memory block index
-	private int offset; 	// in memory block offset, record alignment?
-	private int capacity; 	// allocated size
+
+	private short index; 	// memory block index 内存块索引:第几个内存块,用于定位记录在哪个内存块
+	private int offset; 	// in memory block offset, record alignment? 一条记录在内存块中的偏移量,用于定位记录
+	private int capacity; 	// allocated size 记录占用的字节数
 
 	public RecordIndex() {
-		
 	}
-	
+
+    //根据bucket解析出对应的三个字段
 	public RecordIndex(long bucket) {
 		this.capacity = (int)(bucket >>> 48);
 		this.index = (short)((bucket >>> 32) & 0x0000FFFF);
 		this.offset = (int)(bucket & 0x0000FFFFFFFFFFFFL);
 	}
-	
+
+    //根据三个字段组成bucket
+    public long getBucket() {
+        return (long)capacity << 48 | (long)index << 32 | offset;
+    }
+
 	public RecordIndex setIndex(int idx) {
 		this.index =(short)idx;
 		return this;
@@ -102,10 +106,6 @@ public class RecordIndex implements Comparable<RecordIndex>, Comparator<RecordIn
 		return this.index == rec.index &&
 			   this.offset == rec.offset &&
 			   this.capacity == rec.capacity;
-	}
-	
-	public long getBucket() {
-		return (long)capacity << 48 | (long)index << 32 | offset;
 	}
 	
 	public String toString() {

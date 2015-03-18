@@ -6,12 +6,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
-/**
- * JAVA实现的基于MMAP的带落地的KEY-VALUE缓存
- *
- * https://github.com/eddyzhou/mcache
- *
- */
 public class Mmap {
     private static Logger log = Logger.getLogger(Mmap.class.getName());
 
@@ -32,10 +26,15 @@ public class Mmap {
     private long statUseMsec;
     private int statMaxDatasize;
 
-    // fileName不要加后缀，会自动增加idx和dat后缀
-    public Mmap(String fileName, int dataNum, int dataSize)
-            throws MmapException, IOException {
+    /**
+     *
+     * @param fileName fileName不要加后缀，会自动增加idx和dat后缀
+     * @param dataNum
+     * @param dataSize
+     */
+    public Mmap(String fileName, int dataNum, int dataSize) throws MmapException, IOException {
         statFile = fileName;
+        //根据dataNum计算hashNum.
         int hashNum = MmapUtils.getlargerPrime(dataNum * 2);
         int conflictNum = Math.abs(dataNum / 2);
         this.dataSize = dataSize + 16;
@@ -46,8 +45,7 @@ public class Mmap {
         boolean needInit = !indexFile.exists();
         this.indexFile = new MmapFile(indexFile, indexSize);
         ByteBuffer bb = this.indexFile.getBuffer();
-        this.indexMap = new MemIndexMap(bb, indexSize, hashNum, conflictNum,
-                dataNum, this.dataSize, needInit);
+        this.indexMap = new MemIndexMap(bb, indexSize, hashNum, conflictNum, dataNum, this.dataSize, needInit);
 
         // dataFile
         long totalSize = 1L * (dataNum + 1) * this.dataSize;
@@ -75,11 +73,9 @@ public class Mmap {
         dataBuffers = new ByteBuffer[dataFileNum];
         for (int i = 0; i < dataFileNum; i++) {
             if (i == dataFileNum - 1) {
-                dataFiles[i] = new MmapFile(new File(fileName + ".dat" + i),
-                        (int) lastFileSize);
+                dataFiles[i] = new MmapFile(new File(fileName + ".dat" + i), (int) lastFileSize);
             } else {
-                dataFiles[i] = new MmapFile(new File(fileName + ".dat" + i),
-                        this.dataNumOfOneFile * this.dataSize);
+                dataFiles[i] = new MmapFile(new File(fileName + ".dat" + i), this.dataNumOfOneFile * this.dataSize);
             }
             dataBuffers[i] = dataFiles[i].getBuffer();
         }
@@ -111,8 +107,7 @@ public class Mmap {
 
     public byte[] get(long key) {
         ByteBuffer bb = getByteBuffer(key);
-        if (bb == null)
-            return null;
+        if (bb == null) return null;
 
         byte[] bytes = new byte[bb.capacity()];
         bb.slice().get(bytes);
@@ -130,8 +125,7 @@ public class Mmap {
             return null;
         }
 
-        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile]
-                .duplicate();
+        ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
         tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize);
         tmpBuffer.limit((pos % this.dataNumOfOneFile) * dataSize + 12);
         long _key = tmpBuffer.slice().asLongBuffer().get(0);
@@ -161,9 +155,9 @@ public class Mmap {
         }
 
         int pos = indexMap.getIndex(key);
+        //存在:覆盖. 能根据key找到索引位置,说明存在
         if (pos > 0) {
-            ByteBuffer tmpBuffer = dataBuffers[(pos / this.dataNumOfOneFile)]
-                    .duplicate();
+            ByteBuffer tmpBuffer = dataBuffers[(pos / this.dataNumOfOneFile)].duplicate();
             tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize);
             tmpBuffer.limit((pos % this.dataNumOfOneFile) * dataSize + 12);
             long _key = tmpBuffer.slice().asLongBuffer().get(0);
@@ -171,8 +165,7 @@ public class Mmap {
 
             // write len
             // key-长度-data-时间戳，(key-长度-时间戳)部分共占16个字节
-            int writeSize = ((dataSize - 16) > bytes.length ? bytes.length
-                    : (dataSize - 16));
+            int writeSize = ((dataSize - 16) > bytes.length ? bytes.length : (dataSize - 16));
             tmpBuffer.asIntBuffer().put(2, writeSize);
 
             // write data
@@ -182,19 +175,17 @@ public class Mmap {
             tmpBuffer.slice().put(bytes, 0, writeSize);
 
             // 时间戳
-            tmpBuffer.position(((pos % this.dataNumOfOneFile) + 1) * dataSize
-                    - 4);
+            tmpBuffer.position(((pos % this.dataNumOfOneFile) + 1) * dataSize - 4);
             tmpBuffer.slice().asIntBuffer().put(0, (int) (startTime / 1000));
         } else {
+            //不存在:新增.
             int _pos = indexMap.insertData();
-            ByteBuffer tmpBuffer = dataBuffers[_pos / this.dataNumOfOneFile]
-                    .duplicate();
+            ByteBuffer tmpBuffer = dataBuffers[_pos / this.dataNumOfOneFile].duplicate();
             tmpBuffer.position((_pos % this.dataNumOfOneFile) * dataSize);
             tmpBuffer.limit((_pos % this.dataNumOfOneFile) * dataSize + 12);
             tmpBuffer.slice().asLongBuffer().put(0, key);
 
-            int writeSize = ((dataSize - 16) > bytes.length ? bytes.length
-                    : (dataSize - 16));
+            int writeSize = ((dataSize - 16) > bytes.length ? bytes.length : (dataSize - 16));
 
             // write len
             tmpBuffer.slice().asIntBuffer().put(2, writeSize);
@@ -205,8 +196,7 @@ public class Mmap {
             tmpBuffer.limit(((_pos % this.dataNumOfOneFile) + 1) * dataSize);
             tmpBuffer.slice().put(bytes, 0, writeSize);
 
-            tmpBuffer
-                    .limit(((_pos % this.dataNumOfOneFile) + 1) * dataSize - 4);
+            tmpBuffer.limit(((_pos % this.dataNumOfOneFile) + 1) * dataSize - 4);
             tmpBuffer.slice().asIntBuffer().put(0, (int) startTime / 1000);
 
             try {
@@ -214,8 +204,7 @@ public class Mmap {
             } catch (MmapException e) {
                 // for reuse
                 indexMap.freeData(_pos);
-                tmpBuffer = dataBuffers[_pos / this.dataNumOfOneFile]
-                        .duplicate();
+                tmpBuffer = dataBuffers[_pos / this.dataNumOfOneFile].duplicate();
                 tmpBuffer.position((_pos % this.dataNumOfOneFile) * dataSize);
                 tmpBuffer.limit((_pos % this.dataNumOfOneFile) * dataSize + 12);
                 tmpBuffer.slice().asLongBuffer().put(0, 0);
@@ -234,8 +223,7 @@ public class Mmap {
 
         int pos = indexMap.getIndex(key);
         if (pos > 0) {
-            ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile]
-                    .duplicate();
+            ByteBuffer tmpBuffer = dataBuffers[pos / this.dataNumOfOneFile].duplicate();
             tmpBuffer.position((pos % this.dataNumOfOneFile) * dataSize);
             tmpBuffer.limit((pos % this.dataNumOfOneFile) * dataSize + 12);
             tmpBuffer.slice().asLongBuffer().put(0, 0);
@@ -257,24 +245,20 @@ public class Mmap {
     private void doStat(long time) {
         if (time - statLastRecordTime > 1000 * 60 * 60) {
             statLastRecordTime = time;
-            long avg = statUseMsec == 0 ? 0
-                    : ((statGetCount + statPutCount) * 1000 / statUseMsec);
+            long avg = statUseMsec == 0 ? 0 : ((statGetCount + statPutCount) * 1000 / statUseMsec);
             long useNumRate = (getUsedNum() * 100) / size();
             long dataSizeRate = (statMaxDatasize * 100) / dataSize;
             log.info("[" + statFile + "] stat:" + indexMap.toString()
                     + " , [getCount=" + statGetCount + ", putCount="
                     + statPutCount + ", usedMsec=" + statUseMsec + ", avg="
                     + avg + ", maxDatasize=" + statMaxDatasize
-                    + ", useNumRate=" + useNumRate + ", dataSizeRate="
-                    + dataSizeRate + "]");
+                    + ", useNumRate=" + useNumRate + ", dataSizeRate=" + dataSizeRate + "]");
 
             if (useNumRate > 90) {
-                log.warning("[" + statFile + "] warning: useNumRate="
-                        + useNumRate);
+                log.warning("[" + statFile + "] warning: useNumRate=" + useNumRate);
             }
             if (dataSizeRate > 90) {
-                log.warning("[" + statFile + "] warning: dataSizeRate="
-                        + dataSizeRate);
+                log.warning("[" + statFile + "] warning: dataSizeRate=" + dataSizeRate);
             }
         }
     }

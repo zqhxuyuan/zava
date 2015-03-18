@@ -20,7 +20,7 @@ It is suitable for the scene where record quantity not huge but has a very frequ
 ## Exmaple
 ```java		
 	File dbFile = new File("/tmp/fkvtest.db"); 
-	// load old database or create new one(if file not exists) witch can store 10000 records  
+	// load old database or create new one(if file not exists) which can store 10000 records
 	Fkv fkv = new FkvImpl(dbFile, 10000, 8, 10); 
 	// key must be 8 byte size
 	String key = "01234567"; 

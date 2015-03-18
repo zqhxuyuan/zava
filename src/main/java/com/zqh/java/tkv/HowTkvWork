@@ -77,4 +77,21 @@ HDFS IndexFile Format:
   |key|offset|valueLength|tags|
 
 其中key的长度和tags的长度都是在构造RAFIndexStore时传入的,因此是固定的,而offset和valueLength都是int类型=4个字节
+并没有为IndexStore设计成如下格式: keyLen|valueLength|offset|key|tags
+而是固定字节数.如果写入的key,tags没有够默认的,读取时也是读取固定的字节数.这样的好处是不需要进行额外的计算.
 
+RAFIndexStore的构造函数中计算一条记录的索引长度indexLength的方式:
+  this.indexLength = this.keyLength + OFFSET_LEN + LENGTH_LEN + this.tagLength;
+分别对应了HDFS IndexFile Format四个字段的长度.
+
+#### RAFIndexStore
+HdfsIndexStore的实现是通过RAFIndexStore来完成的.HdfsIndexStore还要完成HDFS文件系统的索引文件的存储.
+RAFIndexStore的append方法完成了索引文件格式的存储.其中offset和value.length通过右移位来完成.
+因为这2个字段都是4个字节=4*8=32位.右移24位=只取前8位=最高位字节/第一位字节.
+右移16位=取前16位,由于要转成byte,只取最右边的8位....
+
+#### WHAT HAVE U LEARNED
+1. LocalImpl use keyValueIndex to keep key->offset on memory
+2. HdfsImpl store index file and data file separate.
+3. HDFS DataFile format and IndexFile format
+4. HDFS DataFile and IndexFile operation step.

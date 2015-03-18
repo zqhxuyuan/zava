@@ -44,8 +44,7 @@ public class MemIndexMap {
      * @return
      */
     public static int calSize(int hashNum, int conflictNum, int dataNum) {
-        // size = header size + hash size + conflict bucket size + conflict size
-        // + data bucket size
+        // size = header size + hash size + conflict bucket size + conflict size + data bucket size
         int size = HEADER_SIZE + hashNum * HASH_UNIT_SIZE
                 + MemBucket.calSize(conflictNum) + (conflictNum + 1)
                 * HASH_UNIT_SIZE + MemBucket.calSize(dataNum);

@@ -15,7 +15,8 @@ public class Server {
     public static void main(String args[]) throws IOException {
         HelloWorld helloWorld = new HelloWorldImpl();
         FLRMI.registerFLRMIService("hello", helloWorld);
-        FLRMI.startServer(new FLRMIServer());
+        //FLRMI.startServer(new FLRMIServer());
+        FLRMI.startServer();
         System.out.println("启动成功");
     }
 }
