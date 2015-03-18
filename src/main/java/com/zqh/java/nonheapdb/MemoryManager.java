@@ -208,10 +208,22 @@ public class MemoryManager {
         return getRecord(rec.getKey(), false);
     }
 
+    // get record by RecordIndex
+    private Record getRecord(RecordIndex ridx) {
+        MemoryBuffer b = this.buffers.get(ridx.index());
+        //这里获取到Record后,设置RecordIndex. 因为是链式调用,setIndex后返回的也是Record.
+        return getRecordInner(b, ridx.offset())
+                .setIndex(ridx);
+    }
+
+    // 面向字节,来获取记录.定位到MemoryBuffer的offset处,
     private Record getRecordInner(MemoryBuffer b, int offset) {
-        Record rec = new Record();
+        //读取单元=64byte. 既然key,value的长度是不确定的.如何确定完整地读取一条记录?
         byte[] buf = b.getData(Record.READUNIT, offset);
         ByteBuffer nbuf = ByteBuffer.wrap(buf);
+
+        Record rec = new Record();
+        //调用Record的setBuffer,会将ByteBuffer中的字节数据为Record的各个字段赋值
         int hsize = rec.setBuffer(nbuf);
         if (rec.getKey() == null) {
             String key = new String(b.getData(rec.getInfo().ksize, offset + hsize));
@@ -241,6 +253,7 @@ public class MemoryManager {
 
                 //在循环的过程中,要设置pidx,这样找到后,找到的记录的parent就是上一条记录!
                 //这样的话,貌似只有找到记录的key才有parent字段.其他记录都没有啊.
+                //如果找到的刚好是链表的第一个元素,不会执行if后面的,pidx没有被赋值过,则parent=null
 				rec.setParent(pidx);
 				if (hasData) {
 					getData(rec);
@@ -253,12 +266,6 @@ public class MemoryManager {
 		}
 		return null;
 	}
-
-    private Record getRecord(RecordIndex ridx) {
-        MemoryBuffer b = this.buffers.get(ridx.index());
-        //这里获取到Record后,设置RecordIndex. 因为是链式调用,setIndex后返回的也是Record.
-        return getRecordInner(b, ridx.offset()).setIndex(ridx);
-    }
 
     private void getData(Record rec) {
         if (rec.getData() == null) {
@@ -285,10 +292,18 @@ public class MemoryManager {
             //根据记录,得到记录的索引
 			RecordIndex idx = rec.getIndex();
             //TODO 索引的parent是什么? 同一个bucket的冲突列表??
+            //什么时候记录的parent为空? 链表的第一个元素没有parent.
+            //链表的第二个元素开始都有可能有parent引用. 我们能确定的是第一个元素一定没有parent,但不一定其他元素都有parent
+            //因为setParent发生在get时才设置,如果没有get,就没有setParent. 如果get刚好在第一个元素,pidx=null
+            //要删除链表的第一个元素,则要将下一个元素的RecordIndex保存在bucket桶里:即第一个元素的next值. 删除前bucket保存的是表头的RecordIndex.
 			if (rec.getParent() == null) {
 				map.setBucket(key, rec.getNext());
 			} else {
+                //删除的不是链表表头,先找到要删除节点的父节点
 				MemoryBuffer pb = buffers.get(rec.getParent().index());
+                //设置父节点的next引用指向要删除节点的next
+                //父节点的位置是rec.getParent().offset,再加上一个字节就是offset后的next,因为Record的offset是MAGIC,再往后一个字节是next
+                //要删除节点的下一个节点的引用,存储在记录的next字段里:即rec.getNext.
 				pb.putLong(rec.getNext(), rec.getParent().offset() + 1);
 			}
 
