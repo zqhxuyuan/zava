@@ -3,6 +3,11 @@ package com.zqh.java.nonheapdb;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * Cache提供比MemoryManager更上层的服务
+ * MemoryManager添加等操作还有和底层的Record交互.
+ * Cache就只和key,value交互.不需要知道底层的数据结构
+ */
 public class DBCache {
 
 	private MemoryManager manager;
@@ -33,7 +38,6 @@ public class DBCache {
 		this.metrics = new Metrics();
 		this.bm = new BucketManager(hashpower);
 		this.manager = new MemoryManager(bm, this.blocksize, this.maxbytes);
-
 	}
 
 	public boolean exist(String key) {
@@ -41,14 +45,11 @@ public class DBCache {
 	}
 
 	public boolean put(String key, byte[] value) {
-
 		this.metrics.incrPutCmds();
-
 		if (value.length > blocksize) {
 			this.metrics.incrPutFails();
 			return false;
 		}
-
 		boolean ret = false;
 		if (ret = this.manager.put(key, value)) {
 			this.metrics.incrRecords();
@@ -82,18 +83,13 @@ public class DBCache {
 		sb.append(String.format("get_misses: %d\r\n", this.metrics.getMisses()));
 		sb.append(String.format("put_cmds: %d\r\n", this.metrics.getPutCmds()));
 		sb.append(String.format("put_fails: %d\r\n", this.metrics.getPutFails()));
-		sb.append(String.format("remove_cmds: %d\r\n",
-				this.metrics.getRemoveCmds()));
-		sb.append(String.format("remove_fails: %d\r\n",
-				this.metrics.getRemoveFails()));
-		sb.append(String.format("current_records: %d\r\n",
-				this.manager.reccount()));
-		sb.append(String.format("allocated_bytes: %d\r\n",
-				this.manager.allocated()));
+		sb.append(String.format("remove_cmds: %d\r\n", this.metrics.getRemoveCmds()));
+		sb.append(String.format("remove_fails: %d\r\n", this.metrics.getRemoveFails()));
+		sb.append(String.format("current_records: %d\r\n", this.manager.reccount()));
+		sb.append(String.format("allocated_bytes: %d\r\n", this.manager.allocated()));
 		sb.append(String.format("used_bytes: %d\r\n", this.manager.used()));
 		sb.append(String.format("fp_size: %d\r\n", this.manager.fpsize()));
-		sb.append(String.format("defragment_count: %d\r\n",
-				this.manager.dfcount()));
+		sb.append(String.format("defragment_count: %d\r\n", this.manager.dfcount()));
 		return sb.toString();
 	}
 

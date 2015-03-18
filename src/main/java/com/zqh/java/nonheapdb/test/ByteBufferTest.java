@@ -103,6 +103,8 @@ public class ByteBufferTest extends BasedTest {
 	}
 
     // MemoryManager貌似只有2个方法, put, getRecord
+    // MemoryManager管理多个内存块MemoryBuffer,实际的记录操作都在MemoryBuffer中
+    // 所以内存管理只是验证put和get数据的正确性. 至于底层内存块中记录是如何申请,如何寻找空闲块,都在上面的测试方法中
 	public void testManager() {
         //hashpower=16,capacity=1<<16=65536.buckets桶的大小也是capacity.
         //桶的管理, 设置hash值以及桶的大小

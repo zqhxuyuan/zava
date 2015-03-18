@@ -4,7 +4,16 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.TreeSet;
 
-//buffer block 缓冲块
+/**
+ * buffer block 缓冲块
+ * 一个内存块管理记录的put和get,remove操作.
+ * 添加一条记录返回这条记录的索引信息RecordIndex.
+ *
+ * 并提供在内存块中寻找合适的空闲块:findFreeBlock,
+ * 碎片整理:defragment,
+ * 保留空间:remainToRecord,
+ * 合并最后一条记录:mergeLastRecord.
+ */
 public class MemoryBuffer {
 	private int used; 							// record used byte
 	private int count;							// record count
@@ -69,6 +78,110 @@ public class MemoryBuffer {
 		return this.fp.size();
 	}
 
+    // 将记录的字节数组放入缓冲区中.返回记录的索引信息
+    // 全内存(Non-Heap)操作如何体现?
+    // 添加一条记录后,返回这条记录的索引信息. 因为记录直接写在内存中,
+    // 所以要在内存中知道刚刚写入的这条记录在内存中的位置信息,以及占用的大小
+
+    // 没有指定offset的话,会往buf_append末尾追加.也会修改buf的内容!
+    // 即追加到buf_append中的数据后,通过buf也能获取到写入的数据
+    // 原始buf和buf_append唯一的不同是:remain和position不同.
+    // 追加到buf_append后,position增加,remain减少. 而原始buf都没有变化(0和capacity)
+    public RecordIndex putData(ByteBuffer nbuf) {
+        RecordIndex record = new RecordIndex()
+                .setOffset(buf_append.position())
+                .setCapacity(nbuf.limit());
+        //追加到buf_append缓冲区中
+        this.buf_append.put(nbuf);
+        this.used += record.capacity(); //记录了内存缓冲区使用的字节数
+        this.count++; //记录的数量
+        return record;
+    }
+
+    // 有指定offset的话,会在内存缓冲区的指定位置写入数据.
+    public void putData(ByteBuffer rbuf, int offset) {
+        //slice()根据现有的缓冲区创建一个子缓冲区:它创建一个新的缓冲区，新缓冲区与原来的缓冲区的一部分共享数据。
+        ByteBuffer nbuf = this.buf.slice();
+        //定位到指定位置
+        nbuf.position(offset);
+        //写入数据
+        nbuf.put(rbuf);
+
+        this.used += rbuf.limit();
+        this.count++;
+    }
+
+    public void putData(byte data, int offset) {
+        ByteBuffer nbuf = this.buf.slice();
+        nbuf.position(offset);
+        nbuf.put(data);
+    }
+
+    public void putLong(long data, int offset){
+        ByteBuffer nbuf = this.buf.slice();
+        nbuf.position(offset);
+        nbuf.putLong(data);
+    }
+
+    //在offset开始,读取length个字节
+    public byte[] getData(int length, int offset) {
+        ByteBuffer nbuf = this.buf.slice();
+        nbuf.position(offset);
+        //要读取的长度比缓冲区剩余的数据还要多, 最多就只读取缓冲区的那些了.
+        //因为缓冲区的remainning的限制,如果要读取比remainning还要多的数据,是做不到的.
+        int rl = (length - nbuf.remaining() > 0) ? nbuf.remaining():length;
+        byte[] data = new byte[rl];
+        nbuf.get(data);
+        return data;
+    }
+
+    public byte getData(int offset){
+        ByteBuffer nbuf = this.buf.slice();
+        nbuf.position(offset);
+        return nbuf.get();
+    }
+
+    public Long getLong(int offset) {
+        ByteBuffer nbuf = this.buf.slice();
+        nbuf.position(offset);
+        return nbuf.getLong();
+    }
+
+    /*
+     * remove record and add to free pool, if record is the last record
+     * 删除一条记录,要在内存缓冲区中将这条记录(在内存缓冲区的开始位置)的第一个字节标记为空闲
+     * 然后要将这条记录加入到空闲池中. fp接受的是RecordIndex. 而不是记录本身.
+     * 通过RecordIndex可以方便地获取到offset用于更新空闲标记.
+     */
+    public void removeRecord(RecordIndex rec, int used) {
+        this.putData(Record.MAGICFB,rec.offset());
+        this.used -= used;
+        this.count --;
+        this.fp.add(rec.getBucket());
+    }
+
+    /*
+     * if the memory block is active, before removeRecord you can mergeLastRecord
+     * 如果当前内存块是激活的,在删除记录前,可以对最后一条记录进行合并
+     * mergetLastRecord(lastRecordIndex)
+     * removeRecord(lastRecordIndex)
+     */
+    public boolean mergeLastRecord(RecordIndex rec, int used) {
+        // the rec is last record. buf_append是内存块的最后一个字节.
+        // 最后一条记录的offset+capacity=最后一条记录的endpoint.即整个内存块的endpoint
+        if (rec.offset() + rec.capacity() == buf_append.position()) {
+            //定位到最后一条记录的开始位置.这样下一条记录如果写数据的话,会直接覆盖最后一条记录.
+            //我们并没有像removeRecord那样在offset位置标记空闲,并加入到fp中.而是直接覆盖!
+            this.buf_append.position(rec.offset());
+            //删除掉最后一条记录.所以计数器都要减少
+            this.used -= used;
+            this.count --;
+            //返回true,表示合并成功,就不会调用removeRecord了.
+            return true;
+        }
+        return false;
+    }
+
 	/*
 	 * add remaining free memory to free pool, and return record
 	 * 添加剩余的空闲内存到空闲块池中,并返回当前记录(RecordIndex)
@@ -76,10 +189,10 @@ public class MemoryBuffer {
 	public RecordIndex remainToRecord(int index) {
         //构造RecordIndex时,指定三个字段,其中bucket的计算是根据三个字段组合起来的
 		RecordIndex record = new RecordIndex()
-			.setCapacity(this.remaining())
-			.setOffset(buf_append.position())
-			.setIndex(index); //指定是哪个内存块
-        //在指定位置修改标记位为空闲
+			.setCapacity(this.remaining())    //要把剩余的都给这条记录,应该在内存块的末尾调用该方法
+			.setOffset(buf_append.position()) //buf_append的位置是要写入记录的offset.
+			.setIndex(index);                 //指定是哪个内存块
+        //在指定位置修改标记位为空闲. 因为剩余的空间要被保留(不够写)
 		this.putData(Record.MAGICFB, record.offset());
         //添加到空闲块池中是record的bucket. 要从空闲池中获取,只要根据bucket反解析即可得到RecordIndex
 		this.fp.add(record.getBucket());
@@ -88,6 +201,12 @@ public class MemoryBuffer {
 
 	/*
 	 * find free block by length (best fit), if free block is too large, would to split
+	 * 给定长度,寻找最适合的块. 如果空闲块太大,则进行分裂.
+	 *
+	 * 注意:调用该方法后,如果没有分裂,则找到的那个空闲块会从fp中删除,并返回给客户端
+	 * 如果空闲块太大,分裂后,假设原先有一个空闲块,调用该方法后,还会剩余一个新分裂出来的空闲块.
+	 * 但是注意返回给客户端的是客户端要求长度的空闲块.而不是新分裂出的空闲块.
+	 * 比如原先空闲块=59, 要求length=27, 则返回给客户端的是length=27的空闲块,并分裂出新的空闲块,大小=32
 	 */
 	public RecordIndex findFreeBlock(int length) {
         //什么时候没有空闲块? 数据一直put,没有remove,则没有空闲块. 空闲块发生在remove的时候,或内存块的最后几个字节
@@ -133,42 +252,6 @@ public class MemoryBuffer {
 			}
 		}
 		return rec;
-	}
-
-
-	/*
-	 * remove record and add to free pool, if record is the last record
-	 * 删除一条记录,要在内存缓冲区中将这条记录(在内存缓冲区的开始位置)的第一个字节标记为空闲
-	 * 然后要将这条记录加入到空闲池中. fp接受的是RecordIndex. 而不是记录本身.
-	 * 通过RecordIndex可以方便地获取到offset用于更新空闲标记.
-	 */
-	public void removeRecord(RecordIndex rec, int used) {
-		this.putData(Record.MAGICFB,rec.offset());
-		this.used -= used;
-		this.count --;
-		this.fp.add(rec.getBucket());
-	}
-
-	/*
-	 * if the memory block is active, before removeRecord you can mergeLastRecord
-	 * 如果当前内存块是激活的,在删除记录前,可以对最后一条记录进行合并
-	 * mergetLastRecord(lastRecordIndex)
-	 * removeRecord(lastRecordIndex)
-	 */
-	public boolean mergeLastRecord(RecordIndex rec, int used) {
-		// the rec is last record. buf_append是内存块的最后一个字节.
-		// 最后一条记录的offset+capacity=最后一条记录的endpoint.即整个内存块的endpoint
-		if (rec.offset() + rec.capacity() == buf_append.position()) {
-            //定位到最后一条记录的开始位置.这样下一条记录如果写数据的话,会直接覆盖最后一条记录.
-            //我们并没有像removeRecord那样在offset位置标记空闲,并加入到fp中.而是直接覆盖!
-			this.buf_append.position(rec.offset());
-            //删除掉最后一条记录.所以计数器都要减少
-			this.used -= used;
-			this.count --;
-            //返回true,表示合并成功,就不会调用removeRecord了.
-			return true;
-		}
-		return false;
 	}
 	
 	/*
@@ -248,74 +331,6 @@ public class MemoryBuffer {
 		return brec;
 	}
 	*/
-
-    // 将记录的字节数组放入缓冲区中.返回记录的索引信息
-    // 全内存(Non-Heap)操作如何体现?
-    // 添加一条记录后,返回这条记录的索引信息. 因为记录直接写在内存中,
-    // 所以要在内存中知道刚刚写入的这条记录在内存中的位置信息,以及占用的大小
-
-    // 没有指定offset的话,会往buf_append末尾追加.也会修改buf的内容!
-    // 即追加到buf_append中的数据后,通过buf也能获取到写入的数据
-    // 原始buf和buf_append唯一的不同是:remain和position不同.
-    // 追加到buf_append后,position增加,remain减少. 而原始buf都没有变化(0和capacity)
-	public RecordIndex putData(ByteBuffer nbuf) {
-		RecordIndex record = new RecordIndex()
-                                .setOffset(buf_append.position())
-                                .setCapacity(nbuf.limit());
-        //追加到buf_append缓冲区中
-		this.buf_append.put(nbuf);
-		this.used += record.capacity(); //记录了内存缓冲区使用的字节数
-		this.count++; //记录的数量
-		return record;
-	}
-
-    // 有指定offset的话,会在内存缓冲区的指定位置写入数据.
-	public void putData(ByteBuffer rbuf, int offset) {
-        //slice()根据现有的缓冲区创建一个子缓冲区:它创建一个新的缓冲区，新缓冲区与原来的缓冲区的一部分共享数据。
-		ByteBuffer nbuf = this.buf.slice();
-        //定位到指定位置
-		nbuf.position(offset);
-        //写入数据
-		nbuf.put(rbuf);
-		
-		this.used += rbuf.limit();
-		this.count++;
-	}
-	
-	public void putData(byte data, int offset) {
-		ByteBuffer nbuf = this.buf.slice();
-		nbuf.position(offset);
-		nbuf.put(data);
-	}
-	
-	public void putLong(long data, int offset){
-		ByteBuffer nbuf = this.buf.slice();
-		nbuf.position(offset);
-		nbuf.putLong(data);
-	}
-
-    //在offset开始,读取length个字节
-	public byte[] getData(int length, int offset) {
-		ByteBuffer nbuf = this.buf.slice();
-		nbuf.position(offset);
-        //要读取的长度比缓冲区的数据还要多, 最多就只读取缓冲区的那些了.
-		int rl = (length - nbuf.remaining() > 0) ? nbuf.remaining():length; 
-		byte[] data = new byte[rl];
-		nbuf.get(data);
-		return data;
-	}
-	
-	public byte getData(int offset){
-		ByteBuffer nbuf = this.buf.slice();
-		nbuf.position(offset);
-		return nbuf.get();
-	}
-	
-	public Long getLong(int offset) {
-		ByteBuffer nbuf = this.buf.slice();
-		nbuf.position(offset);
-		return nbuf.getLong();
-	}
 
     //二进制备份
 	public String hexDump() {

@@ -9,6 +9,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 内存管理: 管理所有的内存块(MemoryBuffer), 以及BucketManager桶的管理
+ * 因为内存中有多个内存块,所以添加一条记录,需要BucketManager和MemoryBuffer协同,将记录添加到对应的内存块中.
+ *
+ */
 public class MemoryManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(MemoryManager.class);
@@ -129,6 +134,8 @@ public class MemoryManager {
 		return rec;
 	}
 
+    // 添加一条记录: 首先构造Record,然后将记录添加到内存块中
+    // 在put前从BucketManager map中获取key对应的bucket值,并在记录完成添加后更新bucket的值
 	public boolean put(final String key, final byte[] value) {
 		this.lock.writeLock().lock();
 		try {
@@ -137,7 +144,8 @@ public class MemoryManager {
 
             //next是RecordIndex.getBucket()的值,代表了RecordIndex.这里不用对象的方式,用一个long数字,也可以计算出RecordIndex.
             //如果key对应的bucket里已经有数据了,则取出的next是前一个key放入的值.用类似指针的方式setNext.
-            //当前新添加的元素的下一个是原先存在的RecordIndex.getBucket(). 最后在完成添加后,再做一次更新,表示当前是最新的!
+            //setNext表示当前新添加的元素的下一个是原先存在的RecordIndex.getBucket().
+            //最后在完成添加后,再做一次更新,表示当前是最新的!类似于添加元素到链表表头,返回表头元素.
             //如果bucket没有存在数据,则next=0.说明这个key在bucket中是第一个元素(链表头),既然是第一个元素,记录的parent=null
 			long next = this.map.getBucket(key);
 			Record rec = new Record();
@@ -148,7 +156,6 @@ public class MemoryManager {
 
 			ByteBuffer nbuf = rec.getBuffer();
 			int length = nbuf.limit();
-
 			if (length > Record.MAXRECORDSIZE) {
 				LOGGER.info("MemoryManger put failed, size: {}, maxsize: {}", length, Record.MAXRECORDSIZE);
 				return false;
