@@ -3,8 +3,8 @@ package com.github.shansun.sparrow.actor.spi;
 import java.util.Collection;
 import java.util.Map;
 
-import com.github.shansun.sparrow.actor.api.Message;
 import com.github.shansun.sparrow.actor.api.Actor;
+import com.github.shansun.sparrow.actor.api.Message;
 
 /**
  * @author: lanbo <br>

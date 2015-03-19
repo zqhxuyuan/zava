@@ -1,10 +1,11 @@
 package com.github.shansun.sparrow.actor.internal;
 
+import com.github.shansun.sparrow.actor.api.MessageQueue;
 import com.github.shansun.sparrow.actor.api.MessageRedcapCallback;
+import com.github.shansun.sparrow.actor.statistic.Statistics;
 import org.slf4j.LoggerFactory;
 
-import com.github.shansun.sparrow.statistic.CountStatistic;
-import com.github.shansun.sparrow.statistic.Statistics;
+import com.github.shansun.sparrow.actor.statistic.CountStatistic;
 
 /**
  * 消息的搬运工，负责把消息取出来，丢给指定的Actor去处理
@@ -15,32 +16,40 @@ import com.github.shansun.sparrow.statistic.Statistics;
  */
 public class MessageRedcapRunnable implements Runnable {
 
-	private boolean				running;
+	private boolean						running;
 
-	final MemMessageQueue		queue;
+	final MessageQueue<MessageWrapper> queue;
 
 	final MessageRedcapCallback callback;
 
-	long						maximumSize	= 0;
+	long								maximumSize	= 0;
 
-	Thread						thisThread	= Thread.currentThread();
+	Thread								thisThread	= Thread.currentThread();
 
-	volatile Object				lock		= new Object();
+	volatile Object						lock		= new Object();
 
-	CountStatistic				stat;
+	CountStatistic						stat;
 
 	public MessageRedcapRunnable(MessageRedcapCallback callback) {
 		this(0, callback);
 	}
 
+	public MessageRedcapRunnable(MessageRedcapCallback callback, MessageQueue<MessageWrapper> msgQueue) {
+		this(0, callback, null);
+	}
+
 	public MessageRedcapRunnable(long maximumSize, MessageRedcapCallback callback) {
+		this(maximumSize, callback, null);
+	}
+
+	public MessageRedcapRunnable(long maximumSize, MessageRedcapCallback callback, MessageQueue<MessageWrapper> msgQueue) {
 		super();
 
 		// 初始化后即允许执行线程逻辑
 		setRunning(true);
 
 		// 初始化本线程私有的消息队列
-		queue = new MemMessageQueue();
+		queue = msgQueue == null ? new MemMessageQueue() : msgQueue;
 
 		// 真正的业务逻辑，由外部去实现，一般放到Manager里
 		this.callback = callback;
@@ -73,7 +82,7 @@ public class MessageRedcapRunnable implements Runnable {
 
 		synchronized (lock) {
 			while (isRunning()) {
-				MessageWrapper message = queue.poll();
+				MessageWrapper message = (MessageWrapper) queue.poll();
 
 				if (message == null) {
 					try {
@@ -119,7 +128,7 @@ public class MessageRedcapRunnable implements Runnable {
 		return running;
 	}
 
-	public MemMessageQueue getQueue() {
+	public MessageQueue<MessageWrapper> getQueue() {
 		return queue;
 	}
 

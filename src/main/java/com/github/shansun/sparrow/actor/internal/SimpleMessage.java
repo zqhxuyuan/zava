@@ -1,7 +1,8 @@
 package com.github.shansun.sparrow.actor.internal;
 
-import com.github.shansun.sparrow.actor.api.Message;
 import com.github.shansun.sparrow.actor.api.Actor;
+import com.github.shansun.sparrow.actor.api.Message;
+
 
 
 /**

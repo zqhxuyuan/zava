@@ -1,12 +1,14 @@
 package com.github.shansun.sparrow.actor.builder;
 
+import com.github.shansun.sparrow.actor.api.MessageQueue;
+import com.github.shansun.sparrow.actor.constant.Constants;
+import com.github.shansun.sparrow.actor.spi.AbstractActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.github.shansun.sparrow.actor.api.RejectedMessageHandler;
-import com.github.shansun.sparrow.actor.constant.Constants;
 import com.github.shansun.sparrow.actor.internal.DefaultActorManager;
-import com.github.shansun.sparrow.actor.spi.AbstractActor;
 import com.github.shansun.sparrow.actor.spi.ActorManager;
 
 /**
@@ -18,41 +20,31 @@ import com.github.shansun.sparrow.actor.spi.ActorManager;
  */
 public class ActorManagerBuilder {
 
-	private int						threadCount			= Constants.DEFAULT_ACTOR_THREAD_COUNT;
+	private int									threadCount			= Constants.DEFAULT_ACTOR_THREAD_COUNT;
 
-	private AbstractActor			noneMessageActor	= null;
+	private AbstractActor noneMessageActor	= null;
 
-	@SuppressWarnings("unused")
-	// TODO
-	private boolean					useBlockQueue		= false;
+	private long								maximumMessageSize	= 0;
 
-	private long					maximumMessageSize	= 0;
+	private RejectedMessageHandler				rejectedMessageHanlder;
 
-	private RejectedMessageHandler	rejectedMessageHanlder;
+	private Logger								logger				= LoggerFactory.getLogger(DefaultActorManager.class);
 
-	private Logger					logger				= LoggerFactory.getLogger(DefaultActorManager.class);
+	private Class<? extends MessageQueue<?>>	messageQueueType;
 
 	public static ActorManagerBuilder newBuilder() {
 		return new ActorManagerBuilder();
 	}
 
 	public ActorManagerBuilder withThreadCount(int count) {
+		Preconditions.checkArgument(count > 0);
 		this.threadCount = count;
 		return this;
 	}
 
 	public ActorManagerBuilder withNoneMessageActor(AbstractActor actor) {
+		Preconditions.checkNotNull(actor);
 		this.noneMessageActor = actor;
-		return this;
-	}
-
-	public ActorManagerBuilder useBlockQueue() {
-		this.useBlockQueue = true;
-		return this;
-	}
-
-	public ActorManagerBuilder useNonBlockQueue() {
-		this.useBlockQueue = false;
 		return this;
 	}
 
@@ -62,12 +54,20 @@ public class ActorManagerBuilder {
 	}
 
 	public ActorManagerBuilder withRejectedMessageHandler(RejectedMessageHandler handler) {
+		Preconditions.checkNotNull(handler);
 		this.rejectedMessageHanlder = handler;
 		return this;
 	}
 
 	public ActorManagerBuilder withLogger(Logger logger) {
+		Preconditions.checkNotNull(logger);
 		this.logger = logger;
+		return this;
+	}
+
+	public ActorManagerBuilder useMessageQueue(Class<? extends MessageQueue<?>> queueType) {
+		Preconditions.checkNotNull(queueType);
+		this.messageQueueType = queueType;
 		return this;
 	}
 
@@ -85,6 +85,8 @@ public class ActorManagerBuilder {
 		manager.rejectedMessageHandler = rejectedMessageHanlder;
 
 		manager.logger = logger;
+
+		manager.messageQueueType = messageQueueType;
 
 		return manager;
 	}

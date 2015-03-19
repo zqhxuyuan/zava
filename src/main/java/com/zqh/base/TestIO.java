@@ -40,6 +40,10 @@ public class TestIO {
         //testVarInt(36);
         //testVarInt(127);
 
+        testCopyWriteFile();
+    }
+
+    public static void testCopyWriteFile()throws Exception{
         String folder = "/home/hadoop/github.com/sparrow/src/main/java/com/shansun/sparrow";
         String srcFolder = "/home/hadoop/github.com/sparrow";
         String targetFolder = "/home/hadoop/IdeaProjects/go-bigdata/zava";
@@ -48,11 +52,15 @@ public class TestIO {
         folder = "/home/hadoop/Downloads/jvm-study-cases-master/src";
         srcFolder = "/home/hadoop/Downloads/jvm-study-cases-master/src";
         targetFolder = "/home/hadoop/IdeaProjects/go-bigdata/zava/src/main/java";
-        testReadAndWrite(folder, srcFolder, targetFolder);
+        //testReadAndWrite(folder, srcFolder, targetFolder);
+
+        srcFolder = "/home/hadoop/github.com/sparrow-actor/sparrow-actor-core/src/main/java/com/shansun/sparrow/actor";
+        targetFolder = "/home/hadoop/IdeaProjects/go-bigdata/zava/src/main/java/com/shansun/sparrow/actor";
+        testReadAndWrite(srcFolder, targetFolder);
     }
 
     //gbk格式的文件转成utf-8格式
-    public static void testReadAndWrite(String folder, String srcFolder, String targetFolder)throws Exception{
+    public static void testReadAndWrite(String srcFolder, String targetFolder)throws Exception{
         //test one file
         /*
         String fileName = "/home/hadoop/github.com/sparrow/src/main/java/com/shansun/sparrow/actor/api/Actor.java";
@@ -62,7 +70,7 @@ public class TestIO {
         */
 
         List<String> sb = new ArrayList<>();
-        File folderFile = new File(folder);
+        File folderFile = new File(srcFolder);
         recurFiles(folderFile, sb);
 
         for(String filename : sb){

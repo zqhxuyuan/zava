@@ -12,15 +12,11 @@ public interface Actor {
 
 	/**
 	 * 获取当前Actor的名称，该字段不能为空，否则无法找到对应的Manager去处理消息。
-	 * 
-	 * @return
 	 */
 	String getName();
 
 	/**
 	 * 获取当前Actor所在目录
-	 * 
-	 * @return
 	 */
 	String getCategory();
 

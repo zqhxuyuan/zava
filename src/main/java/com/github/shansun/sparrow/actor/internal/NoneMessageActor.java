@@ -1,11 +1,9 @@
 package com.github.shansun.sparrow.actor.internal;
 
+import com.github.shansun.sparrow.actor.spi.AbstractActor;
 import org.slf4j.LoggerFactory;
 
 import com.github.shansun.sparrow.actor.api.Message;
-import com.github.shansun.sparrow.actor.spi.AbstractActor;
-
-
 
 
 /**

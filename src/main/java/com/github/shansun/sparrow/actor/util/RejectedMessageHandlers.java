@@ -2,9 +2,9 @@ package com.github.shansun.sparrow.actor.util;
 
 import java.util.concurrent.RejectedExecutionException;
 
+import com.github.shansun.sparrow.actor.api.MessageRedcapCallback;
 import com.github.shansun.sparrow.actor.internal.MessageWrapper;
 import com.github.shansun.sparrow.actor.internal.ThreadWrapper;
-import com.github.shansun.sparrow.actor.api.MessageRedcapCallback;
 import com.github.shansun.sparrow.actor.api.RejectedMessageHandler;
 import com.github.shansun.sparrow.actor.internal.MessageRedcapRunnable;
 

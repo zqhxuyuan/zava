@@ -3,6 +3,8 @@ package com.github.shansun.sparrow.actor.internal;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.github.shansun.sparrow.actor.api.MessageQueue;
+
 /**
  * <b>基于内存的消息队列。</b> <br>
  * 每条处理线程会对应一个私有的消息队列。 <br>

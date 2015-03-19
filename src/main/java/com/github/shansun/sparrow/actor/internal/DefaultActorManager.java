@@ -9,7 +9,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.shansun.sparrow.actor.api.RejectedMessageHandler;
+import com.github.shansun.sparrow.actor.api.MessageQueue;
+import com.github.shansun.sparrow.actor.api.MessageRedcapCallback;
+import com.github.shansun.sparrow.actor.constant.Constants;
+import com.github.shansun.sparrow.actor.spi.AbstractActor;
+import com.github.shansun.sparrow.actor.spi.ActorManager;
+import com.github.shansun.sparrow.actor.statistic.Statistics;
 import com.github.shansun.sparrow.actor.util.RejectedMessageHandlers;
 import org.slf4j.Logger;
 
@@ -20,12 +25,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.github.shansun.sparrow.actor.api.Actor;
 import com.github.shansun.sparrow.actor.api.Message;
-import com.github.shansun.sparrow.actor.api.MessageRedcapCallback;
-import com.github.shansun.sparrow.actor.constant.Constants;
-import com.github.shansun.sparrow.actor.spi.AbstractActor;
-import com.github.shansun.sparrow.actor.spi.ActorManager;
-import com.github.shansun.sparrow.statistic.CountStatistic;
-import com.github.shansun.sparrow.statistic.Statistics;
+import com.github.shansun.sparrow.actor.api.RejectedMessageHandler;
+import com.github.shansun.sparrow.actor.statistic.CountStatistic;
 
 /**
  * @author: lanbo <br>
@@ -35,54 +36,56 @@ import com.github.shansun.sparrow.statistic.Statistics;
 public class DefaultActorManager implements ActorManager {
 
 	/** 是否已经完成初始化 */
-	volatile boolean					initialized				= false;
+	volatile boolean						initialized				= false;
 
 	/** 锁对象 */
-	Object								lock					= new Object();
+	Object									lock					= new Object();
 
 	/** 线程组标识 */
-	static int							groupCount				= 0;
+	static int								groupCount				= 0;
 
 	/** 设置当前ActorManager分配多少条线程处理消息 */
-	public int							threadCount				= Constants.DEFAULT_ACTOR_THREAD_COUNT;
+	public int								threadCount				= Constants.DEFAULT_ACTOR_THREAD_COUNT;
 
 	/** 实际使用线程计数 */
-	int									realUsedThreadCount		= 0;
+	int										realUsedThreadCount		= 0;
 
 	/** 每条线程运行接受最大消息数（队列中） ，如果为0，则表示没有限制 */
-	public long							maximumMessageSize		= 0;
+	public long								maximumMessageSize		= 0;
 
 	/**  */
-	public RejectedMessageHandler rejectedMessageHandler	= RejectedMessageHandlers.discardPolicy();
+	public RejectedMessageHandler			rejectedMessageHandler	= RejectedMessageHandlers.discardPolicy();
 
 	/** 线程组 */
-	ThreadGroup							threadGroup;
+	ThreadGroup								threadGroup;
 
 	/** 随机数生成器 */
-	Random								random					= new Random();
+	Random									random					= new Random();
 
 	/** 执行线程 */
-	ThreadWrapper[]						threads;
+	ThreadWrapper[]							threads;
 
 	/** Actor集合 */
-	ConcurrentHashMap<String, Actor>	actors					= new ConcurrentHashMap<String, Actor>();
+	ConcurrentHashMap<String, Actor>		actors					= new ConcurrentHashMap<String, Actor>();
+
+	public Class<? extends MessageQueue<?>>	messageQueueType		= MemMessageQueue.class;
 
 	/** 当消息没有任何Actor处理时，由NoneMessageActor负责执行 */
-	public AbstractActor				noneMessageActor		= new NoneMessageActor();
+	public AbstractActor noneMessageActor		= new NoneMessageActor();
 	{
 		noneMessageActor.setManager(this);
 	}
 
 	/** ActorManager状态 */
-	boolean								running					= false, terminated = false;
+	boolean									running					= false, terminated = false;
 
-	public Logger						logger;
+	public Logger							logger;
 
 	// //////////////////////////////统计计数器////////////////////////////////////////////////////////////
 
-	CountStatistic						totalStat				= Statistics.getCountStat("TOTAL-ACTOR");
-	CountStatistic						rejectStat				= Statistics.getCountStat("REJECT-ACTOR");
-	Map<Integer, CountStatistic>		actorStat				= new HashMap<Integer, CountStatistic>();
+	CountStatistic							totalStat				= Statistics.getCountStat("TOTAL-ACTOR");
+	CountStatistic							rejectStat				= Statistics.getCountStat("REJECT-ACTOR");
+	Map<Integer, CountStatistic>			actorStat				= new HashMap<Integer, CountStatistic>();
 
 	// ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -301,6 +304,7 @@ public class DefaultActorManager implements ActorManager {
 			if (!actors.containsKey(actor.getName())) {
 				try {
 					((AbstractActor) actor).setManager(this);
+					actors.put(actor.getName(), actor);
 				} catch (Exception e) {
 					throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException("mapped exception: " + e, e);
 				}

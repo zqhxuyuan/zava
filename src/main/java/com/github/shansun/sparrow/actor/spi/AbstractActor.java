@@ -2,8 +2,8 @@ package com.github.shansun.sparrow.actor.spi;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.github.shansun.sparrow.actor.api.Message;
 import com.github.shansun.sparrow.actor.api.Actor;
+import com.github.shansun.sparrow.actor.api.Message;
 
 
 /**

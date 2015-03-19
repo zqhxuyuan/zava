@@ -15,22 +15,16 @@ public interface Message {
 
 	/**
 	 * 获取消息来源
-	 * 
-	 * @return
 	 */
 	Actor getSource();
 
 	/**
 	 * 获取消息主题
-	 * 
-	 * @return
 	 */
 	String getSubject();
 
 	/**
 	 * 消息内容
-	 * 
-	 * @return
 	 */
 	Object getData();
 }
