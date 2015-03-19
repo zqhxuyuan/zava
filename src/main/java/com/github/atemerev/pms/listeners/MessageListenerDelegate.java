@@ -17,8 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MessageListenerDelegate implements MessageListener, HasMessageListeners {
 
-    private final List<MessageListener> listeners
-            = new CopyOnWriteArrayList<MessageListener>();
+    private final List<MessageListener> listeners = new CopyOnWriteArrayList<MessageListener>();
 
     /**
      * Broadcast received message to registered listeners. If no listerers are
@@ -26,6 +25,7 @@ public class MessageListenerDelegate implements MessageListener, HasMessageListe
      *
      * @param message Message to broadcast.
      */
+    @Override
     public void processMessage(Object message) {
         synchronized (listeners) {
             if (listeners.size() > 0) {
@@ -42,6 +42,7 @@ public class MessageListenerDelegate implements MessageListener, HasMessageListe
      *
      * @return Linked list of attached message listeners.
      */
+    @Override
     public List<MessageListener> listeners() {
         return this.listeners;
     }
@@ -52,8 +53,7 @@ public class MessageListenerDelegate implements MessageListener, HasMessageListe
      *
      * @param listeners List of message listeners.
      */
-    public synchronized void
-    setListeners(List<MessageListener> listeners) {
+    public synchronized void setListeners(List<MessageListener> listeners) {
         List<MessageListener> reversed = new ArrayList<MessageListener>(listeners);
         Collections.reverse(reversed);
         this.listeners.addAll(reversed);

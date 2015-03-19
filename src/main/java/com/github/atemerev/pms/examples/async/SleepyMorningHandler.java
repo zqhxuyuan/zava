@@ -12,8 +12,7 @@ public class SleepyMorningHandler {
     @Asynchronous @Listener void $(Morning morning) {
         try {
             System.out.println("RING! RING!");
-            System.out.println("Grrr... Have to " +
-                    "snooze the alarm clock...");
+            System.out.println("Grrr... Have to " + "snooze the alarm clock...");
             Thread.sleep(500);
             System.out.println("WHAT?! I'm late! Oh noes!");
         } catch (InterruptedException e) {

@@ -12,15 +12,16 @@ import java.util.List;
  */
 public class Life implements MessageListener, HasMessageListeners {
 
-    private MessageListenerDelegate delegate
-            = new MessageListenerDelegate();
+    private MessageListenerDelegate delegate = new MessageListenerDelegate();
 
     // Delegated methods...
 
+    @Override
     public void processMessage(Object message) {
         delegate.processMessage(message);
     }
 
+    @Override
     public List<MessageListener> listeners() {
         return delegate.listeners();
     }

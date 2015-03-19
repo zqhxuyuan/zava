@@ -106,9 +106,9 @@ public class Hollywood {
 
             // Create a field containing the current state
             proxyClassNode.fields.add(new FieldNode(ACC_PRIVATE, "$state",
-                    "Lcom/miriamlaurel/hollywood/RootState;", null, null));
+                    "Lcom/github/atemerev/hollywood/RootState;", null, null));
             proxyClassNode.fields.add(new FieldNode(ACC_PRIVATE, "$prevState",
-                    "Lcom/miriamlaurel/hollywood/RootState;", null, null));
+                    "Lcom/github/atemerev/hollywood/RootState;", null, null));
 
             // Read actor class node
             ClassNode actorClassNode = new ClassNode();
@@ -149,7 +149,7 @@ public class Hollywood {
                         AbstractInsnNode in = (AbstractInsnNode) i.next();
                         if (in instanceof FieldInsnNode) {
                             FieldInsnNode fieldInsnNode = (FieldInsnNode) in;
-                            if (fieldInsnNode.owner.equals("com/miriamlaurel/hollywood/Hollywood$ActorProxyPrototype")) {
+                            if (fieldInsnNode.owner.equals("com/github/atemerev/hollywood/Hollywood$ActorProxyPrototype")) {
                                 fieldInsnNode.owner = proxyClassName;
                             }
                         }
@@ -199,7 +199,7 @@ public class Hollywood {
 
         // Load "this"
         il.add(new VarInsnNode(ALOAD, 0));
-        il.add(new FieldInsnNode(GETFIELD, proxyClassName, "$state", "Lcom/miriamlaurel/hollywood/RootState;"));
+        il.add(new FieldInsnNode(GETFIELD, proxyClassName, "$state", "Lcom/github/atemerev/hollywood/RootState;"));
         il.add(new TypeInsnNode(CHECKCAST, AsmUtil.asmClassName(aClass)));
 
 
@@ -415,7 +415,7 @@ public class Hollywood {
         try {
             // Create a field containing the actor proxy
             classNode.fields.add(new FieldNode(ACC_PUBLIC, "$actor",
-                    "Lcom/miriamlaurel/hollywood/Actor;", null, null));
+                    "Lcom/github/atemerev/hollywood/Actor;", null, null));
 
             // Read actor proxy prototype class
             ClassNode actorProxyPrototypeNode = new ClassNode();
@@ -449,7 +449,7 @@ public class Hollywood {
 
                     // Load "this"
                     il.add(new VarInsnNode(ALOAD, 0));
-                    il.add(new FieldInsnNode(GETFIELD, classNode.name, "$actor", "Lcom/miriamlaurel/hollywood/Actor;"));
+                    il.add(new FieldInsnNode(GETFIELD, classNode.name, "$actor", "Lcom/github/atemerev/hollywood/Actor;"));
                     il.add(new TypeInsnNode(CHECKCAST, actorProxyClassName));
 
                     // Load other arguments

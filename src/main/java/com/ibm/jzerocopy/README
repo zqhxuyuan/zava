@@ -1,0 +1,14 @@
+Investigating the zero copy performance, forked from http://www.ibm.com/developerworks/library/j-zerocopy/ 
+
+Simple tests:
+
+Using traditional copy
+bytes send--54123305 and totaltime in Millisecond--7167
+bytes send--54123305 and totaltime in Millisecond--7830
+bytes send--54123305 and totaltime in Millisecond--6607
+
+Server using zerocopy on ubuntu 11
+total bytes transferred--54123304 and time taken in Millisecond--4719
+total bytes transferred--54123304 and time taken in Millisecond--4712
+total bytes transferred--54123304 and time taken in Millisecond--4960
+total bytes transferred--54123304 and time taken in Millisecond--4790

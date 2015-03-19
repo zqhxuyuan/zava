@@ -32,6 +32,8 @@ public class DispatchListener implements MessageListener {
     protected Object listener;
 
     // Yay, a meta-Java!
+    // 事件 --> 事件处理
+    // 类   --> 方法
     protected Map<Class, Method> dispatchTable = new HashMap<Class, Method>();
 
     /**
@@ -56,18 +58,20 @@ public class DispatchListener implements MessageListener {
             listener = this;
         }
         this.listener = listener;
-        for (Class aClass = listener.getClass();
-             aClass != null;
-             aClass = aClass.getSuperclass()) {
+        for (Class aClass = listener.getClass(); aClass != null; aClass = aClass.getSuperclass()) {
+            //一个监听器Handler可以定义多个方法. 每种方法可以处理不同类型的事件
             for (Method method : aClass.getDeclaredMethods()) {
-                Listener listenerAnnotation
-                        = method.getAnnotation(Listener.class);
+                //监听器的方法注解是@Listener
+                Listener listenerAnnotation = method.getAnnotation(Listener.class);
+                //方法的参数类型: 即自定义的事件类型
                 Class[] parameterTypes = method.getParameterTypes();
-                if (listenerAnnotation != null
-                        && parameterTypes.length >= 1) {
+                if (listenerAnnotation != null && parameterTypes.length >= 1) {
+                    //只处理第一个参数
                     Class messageType = parameterTypes[0];
                     Method handler = dispatchTable.get(messageType);
                     if (handler == null) {
+                        //事件类型(类)-->事件处理(方法)
+                        //Map限制了一种事件类型只能对应一个事件处理逻辑
                         dispatchTable.put(messageType, method);
                     }
                 }
@@ -85,6 +89,16 @@ public class DispatchListener implements MessageListener {
     public DispatchListener(Executor executor, boolean async) {
         this(executor);
         this.async = async;
+    }
+
+    /**
+     * Set your own executor for async message handling, so you won't have to
+     * wait until processing unblocks.
+     *
+     * @param executor Executor to handle messages.
+     */
+    public void setExecutor(Executor executor) {
+        this.executor = executor;
     }
 
     /**
@@ -116,13 +130,17 @@ public class DispatchListener implements MessageListener {
      *
      * @param message Message to process.
      */
+    @Override
     public void processMessage(final Object message) {
+        //参数是类的实例,可以获取出对应的类(事件), 再从dispatchTable中取出Method:事件的处理逻辑
         final Method method = findCorrespondingMethod(message);
         if (method != null) {
-            if (executor == null
-                    || (method.getAnnotation(Asynchronous.class) == null && !async)) {
+            //使用异步模式,在方法上要有注解:@Asynchronous
+            if (executor == null || (method.getAnnotation(Asynchronous.class) == null && !async)) {
+                //使用反射机制进行动态调用
                 invoke(listener, method, message);
             } else {
+                //如果是多线程模式,则启动一个新的线程来执行事件的处理逻辑
                 executor.execute(new Runnable() {
                     public void run() {
                         invoke(listener, method, message);
@@ -130,16 +148,6 @@ public class DispatchListener implements MessageListener {
                 });
             }
         }
-    }
-
-    /**
-     * Set your own executor for async message handling, so you won't have to
-     * wait until processing unblocks.
-     *
-     * @param executor Executor to handle messages.
-     */
-    public void setExecutor(Executor executor) {
-        this.executor = executor;
     }
 
     /**
@@ -151,12 +159,12 @@ public class DispatchListener implements MessageListener {
      * @return Target method, or null if none found.
      */
     protected Method findCorrespondingMethod(Object message) {
-        for (Class aClass = message.getClass();
-             aClass != null; aClass = aClass.getSuperclass()) {
+        for (Class aClass = message.getClass(); aClass != null; aClass = aClass.getSuperclass()) {
             Method method = dispatchTable.get(aClass);
             if (method != null) {
                 return method;
             }
+            //类名没找到,使用接口名
             for (Class anInterface : aClass.getInterfaces()) {
                 method = dispatchTable.get(anInterface);
                 if (method != null) {
@@ -174,11 +182,8 @@ public class DispatchListener implements MessageListener {
      * @param method   Method to invoke.
      * @param message  Message to pass to this method.
      */
-    protected final void invoke(Object listener,
-                                Method method, Object message) {
-        if (listener == null || method == null) {
-            return;
-        }
+    protected final void invoke(Object listener, Method method, Object message) {
+        if (listener == null || method == null) return;
         try {
             method.setAccessible(true);
             method.invoke(listener, message);

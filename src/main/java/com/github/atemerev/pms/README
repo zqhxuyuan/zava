@@ -1,0 +1,28 @@
+PMS
+====
+
+It is somewhat alike a lightweight, in-JVM implementation of
+JMS, though with different architecture and API. It enables you to make
+the Observer design pattern ubiquitous in your code, without all the related
+pains of creating multiple listeners, handlers and add/remove methods for
+every message type you want to handle. It is especially useful with GUI
+projects or server-side code which handles lots of events, and it can change
+dramatically the way you design your applications, aiming for more simplicity
+and flexibility, both at the same time.
+
+PMS helps with the following tasks:
+• Handling events (messages) of multiple types with a single handler
+object (which can be an instance of anonymous class) in a uniform way;
+一个处理器处理多种类型的事件或消息
+
+• Adding/removing multiple message listeners, each handling messages
+of multiple types, and broadcasting messages to them—by delegating
+this task to MessageListenerDelegate objects;
+添加或删除消息的监听器.
+
+• Executing message handling code in a separate thread or thread pool
+(thanks to java.util.concurrent.Executor)—as simple as adding
+@Asynchronous annotation to your handler method.
+在一个单独的线程或线程池中处理消息.只需要在handler中添加@Asynchronous注解
+
+## Design

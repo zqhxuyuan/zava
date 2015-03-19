@@ -13,11 +13,13 @@ public class RootState {
 
     /**
      * Override this method to execute code right after entering the state.
+     * 刚刚进入这个状态时调用
      */
     public void onEnter() {}
 
     /**
      * Override this method to execute code right before exiting the state.
+     * 在退出这个状态前那一刻调用
      */
     public void onExit() {}
 
