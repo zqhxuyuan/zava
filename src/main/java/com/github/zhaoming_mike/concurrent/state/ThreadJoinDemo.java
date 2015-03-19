@@ -6,7 +6,6 @@ public class ThreadJoinDemo {
 
 	public static void main(String[] args) {
 		final Thread t = new Thread(){
-			
 			@Override
 			public void run() {
 				System.out.println(getName() + "start.");
@@ -21,8 +20,8 @@ public class ThreadJoinDemo {
 			
 		};
 		t.start();
-		Thread t2 = new Thread(){
 
+		Thread t2 = new Thread(){
 			@Override
 			public void run() {
 				System.out.println(getName() + "start.");

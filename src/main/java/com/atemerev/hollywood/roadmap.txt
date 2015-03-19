@@ -1,0 +1,43 @@
+= Hollywood Development Roadmap =
+@author Alexander Kuklev
+@author Alexander Temerev
+@date 2009-01-14
+
+Development steps:
+ * [Done] Comment BlackjackLink
+ * [Done] Comment Promise / MementoPromise
+ * [Done] Async continuation support for PromiseAdapter
+ * [Partially done / Delayed] Comment and make unit tests for the whole Promise
+   stuff (esp. AbstractPromise, AbstractMementoPromise, PromiseExecutionService,
+   sync and async continuations)
+   Assure everyting works.
+  
+ * [Done] Implement server-side request/response support
+ * [Done] Make unit tests for JxtpConnection and JxtpRichConnection.
+   Should work now.
+ 
+ * [In progress] Make numerous simple unit tests for Hollywood.
+ * [In progress] Debug Hollywood until they'll pass.
+ 
+ * [Done] InitialState instead of onCreate. 
+ * [Done (other way)] Make RootState child of DispatchMessageListener.
+ * [Done] Make processMessage of Actor forwarding messages to current state.
+ * [Done] Make a unit test for PMS@Hollywood and assure the stuff works.
+ * Introduce the RW-Lock for setState.
+ * Try to do something wiht exceptions safety for onEnter and onExit.
+ * Make onEnter()s and onExit()s work with package-visible fields.
+ 
+ * Thread safety issues?
+ 
+ * Make unit tests for BlackjackLink.
+ * Try BlackjackLink in production.
+
+ * Javadoc everything public.
+ * Write documentation. (don't forget custom / progress promises!)
+ * Write developer notes on complicated classes (esp. Hollywood,
+  Abstract(Memento)Promise, PromiseTask).
+
+Side developments:
+ * Sequence numbers in lieu UUIDs in Jxtp.
+ * Better impl for PromiseTask based on FutureTask. 
+ * [Done] Cache for state proxies.

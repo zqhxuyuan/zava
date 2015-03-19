@@ -1,0 +1,101 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+package com.github.geophile.erdo.map.arraymap;
+
+import com.github.geophile.erdo.AbstractKey;
+import com.github.geophile.erdo.map.LazyRecord;
+import com.github.geophile.erdo.map.MapCursor;
+
+import java.io.IOException;
+
+public class ArrayMapCursor extends MapCursor
+{
+    // MapCursor interface
+
+    @Override
+    public LazyRecord next() throws IOException, InterruptedException
+    {
+        return neighbor(true);
+    }
+
+    @Override
+    public LazyRecord previous() throws IOException, InterruptedException
+    {
+        return neighbor(false);
+    }
+
+    // ArrayMapCursor interface
+
+    ArrayMapCursor(ArrayMap map, AbstractKey startKey)
+        throws IOException, InterruptedException
+    {
+        super(startKey, false);
+        this.map = map;
+    }
+
+    // For use by this class
+
+    private LazyRecord neighbor(boolean forward) throws IOException, InterruptedException
+    {
+        LazyRecord neighbor = null;
+        switch (state) {
+            case NEVER_USED:
+                if (startKey == null) {
+                    position = forward ? 0 : (int) map.recordCount() - 1;
+                } else {
+                    position = binarySearch(startKey);
+                    if (position < 0) {
+                        position = forward ? -position - 1 : -position - 2;
+                    }
+                }
+                state = State.IN_USE;
+                break;
+            case IN_USE:
+                position += forward ? 1 : -1;
+                break;
+            case DONE:
+                return null;
+        }
+        if (position >= 0 && position < map.recordCount()) {
+            neighbor = map.records.get(position);
+            if (!isOpen(neighbor.key())) {
+                neighbor.destroyRecordReference();
+                neighbor = null;
+            }
+        }
+        if (neighbor == null) {
+            close();
+        }
+        return neighbor;
+    }
+
+    // Adapted from java.util.Arrays.binarySearch0
+    private int binarySearch(AbstractKey key) throws IOException, InterruptedException
+    {
+        int low = 0;
+        int high = map.records.size() - 1;
+        AbstractKey midKey;
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            midKey = map.records.get(mid).key();
+            int c = midKey.compareTo(key);
+            if (c < 0) {
+                low = mid + 1;
+            } else if (c > 0) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
+    }
+
+    // Object state
+
+    private final ArrayMap map;
+    private int position;
+}

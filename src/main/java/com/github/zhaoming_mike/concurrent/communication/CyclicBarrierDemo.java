@@ -43,8 +43,6 @@ public class CyclicBarrierDemo {
 
 /**
  * 循环屏障
- * @author zhaoming@yy.com
- * 2014-4-6
  */
 class CyclicBarrierRunnable implements Runnable{
 

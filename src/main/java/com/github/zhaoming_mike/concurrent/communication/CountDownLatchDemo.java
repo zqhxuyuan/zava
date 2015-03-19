@@ -12,10 +12,15 @@ public class CountDownLatchDemo {
 	static final int countDownSize = 5;
 
 	public static void main(String[] args) throws InterruptedException {
-		CountDownLatch latch = new CountDownLatch(countDownSize);
+		//初始化一个指定大小的Latch
+        CountDownLatch latch = new CountDownLatch(countDownSize);
+
+        //将Latch分别传给Waiter和Decrementer
 		Waiter waiter = new Waiter(latch);
 		Decrementer decrementer = new Decrementer(latch);
-		new Thread(waiter).start();
+
+        //启动线程
+        new Thread(waiter).start();
 		new Thread(decrementer).start();
 		Thread.sleep(6000);
 	}
@@ -23,8 +28,6 @@ public class CountDownLatchDemo {
 
 /**
  * 等待
- * @author zhaoming@yy.com
- * 2014-4-6
  */
 class Waiter implements Runnable {
 	CountDownLatch latch = null;
@@ -35,6 +38,7 @@ class Waiter implements Runnable {
 
 	public void run() {
 		try {
+            //直到latch减为0时,会触发这里,才执行后面的代码
 			latch.await();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -45,8 +49,6 @@ class Waiter implements Runnable {
 
 /**
  * 递减操作
- * @author zhaoming@yy.com
- * 2014-4-6
  */
 class Decrementer implements Runnable {
 	CountDownLatch latch = null;

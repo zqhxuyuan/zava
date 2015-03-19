@@ -6,7 +6,7 @@ public class ThreadStateDemo {
 
 	@SuppressWarnings("deprecation")
 	public static void main(String[] args) {
-	final Object lock = new Object();
+	    final Object lock = new Object();
 		Thread thread = new Thread() {
 
 			@Override
@@ -49,8 +49,7 @@ public class ThreadStateDemo {
 		}
 		thread.stop();
 		try {
-			TimeUnit.SECONDS.sleep(2
-					);
+			TimeUnit.SECONDS.sleep(2);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
