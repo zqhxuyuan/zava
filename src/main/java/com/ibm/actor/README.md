@@ -9,4 +9,4 @@ Actor 是一个执行单元，一次处理一条消息。
 下图显示了 actor 之间的关系。每个 actor 可向其他 actor 发送消息。
 这些消息保存在一个消息队列（也称为邮箱；从概念上讲，每个 actor 有一个队列，
 当 ActorManager 看到某个线程可用于处理消息时，就会从队列中删除该消息，并将它传送给在线程下运行的 actor，以便处理该消息。
-![overview](actor-overview.jpg "actor-overview")
+![overview](actor-overview.gif "actor-overview")
