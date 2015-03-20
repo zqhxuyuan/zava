@@ -33,28 +33,30 @@ public class Hollywood {
     private static final Map<Class, RootState> sterileStateCache = new ConcurrentHashMap<Class, RootState>();
     private static final Map<Class, ForwardingDispatchListener> stateDispatchListenerCache = new ConcurrentHashMap<Class, ForwardingDispatchListener>();
 
+    //创建Actor
     @SuppressWarnings({"unchecked"})
     public static <T extends Actor> T createActor(Class<T> aClass) {
         try {
+            //生成Actor的代理类
             Class actorProxyClass = generateActorProxy(aClass);
+            //创建出Actor实例对象
             T actorInstance = (T) actorProxyClass.newInstance();
 
             Class initialState = null;
 
             // Ensure everything is OK with states and find the initial state
+            // 确保类的各种状态都定义正确,并找出初始状态
             for (Class memberClass : aClass.getDeclaredClasses()) {
                 if (memberClass.isAnnotationPresent(State.class)) {
                     int mod = memberClass.getModifiers();
                     if (!Modifier.isPublic(mod) || !Modifier.isStatic(mod) || !Modifier.isAbstract(mod)) {
-                        throw new IllegalArgumentException
-                                ("State classes need to have 'public static abstract' signature");
+                        throw new IllegalArgumentException("State classes need to have 'public static abstract' signature");
                     }
-
+                    //aClass是一个Actor:因为调用createActor,参数一定是Actor类型. 要求表示状态的内部类必须继承当前Actor
                     if (!aClass.isAssignableFrom(memberClass)) {
-                        throw new IllegalArgumentException
-                                ("State classes must inherit from the actor class");
+                        throw new IllegalArgumentException("State classes must inherit from the actor class");
                     }
-
+                    //如果某个类有@Initial注解,则表示创建完Actor后,Actor进入的初始状态
                     if (memberClass.isAnnotationPresent(Initial.class)) {
                         if (initialState != null) {
                             throw new IllegalArgumentException("Only one state should be marked as @Initial");
@@ -65,8 +67,7 @@ public class Hollywood {
                             Method rootOnEnter = RootState.class.getMethod("onEnter");
                             for (Class i = memberClass; aClass.isAssignableFrom(i); i = i.getSuperclass()) {
                                 if (!i.getMethod("onEnter").equals(rootOnEnter)) {
-                                    throw new IllegalArgumentException
-                                            ("Initial states are not allowed to have direct or inherited onEnter()");
+                                    throw new IllegalArgumentException("Initial states are not allowed to have direct or inherited onEnter()");
                                 }
                             }
                         } catch (NoSuchMethodException e) {
@@ -75,15 +76,14 @@ public class Hollywood {
                     }
                 }
             }
-
             if (initialState == null) {
                 throw new IllegalArgumentException("Some state should be marked as @Initial");
             }
-
+            //设置Actor实例的初始状态(即创建完Actor的状态)
+            //actorInstance是传入的参数Class<T> aClass中的T实例.比如Secretary实例.
+            //而Secretary中并没有setState方法.它是如何生成这个方法的? 就是通过最开始的生成代理类.
             actorInstance.setState(initialState);
-
             return actorInstance;
-
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
@@ -93,7 +93,7 @@ public class Hollywood {
 
     @SuppressWarnings({"unchecked"})
     private static Class generateActorProxy(Class aClass) {
-
+        //Actor类-->其代理类
         Class cachedClass = actorProxyClassCache.get(aClass);
         if (cachedClass != null) return cachedClass;
 
@@ -104,7 +104,7 @@ public class Hollywood {
             String proxyClassName = AsmUtil.asmClassName(aClass) + "_hwproxy";
             AsmUtil.fillClassNode(proxyClassNode, proxyClassName, AsmUtil.asmClassName(aClass));
 
-            // Create a field containing the current state
+            // Create a field containing the current state 添加2个字段
             proxyClassNode.fields.add(new FieldNode(ACC_PRIVATE, "$state",
                     "Lcom/github/atemerev/hollywood/RootState;", null, null));
             proxyClassNode.fields.add(new FieldNode(ACC_PRIVATE, "$prevState",
@@ -360,8 +360,7 @@ public class Hollywood {
 
                 // Check for the unsupported package visibility
                 if (mn.access == 0) {
-                    throw new IllegalArgumentException("Package visibility not supported for method: "
-                            + sourceClass.getSimpleName() + "#" + mn.name);
+                    throw new IllegalArgumentException("Package visibility not supported for method: " + sourceClass.getSimpleName() + "#" + mn.name);
                 }
 
                 // Fill the method with exception throwing code
@@ -371,8 +370,7 @@ public class Hollywood {
                 il.add(new TypeInsnNode(NEW, "java/lang/UnsupportedOperationException"));
                 il.add(new InsnNode(DUP));
                 il.add(new LdcInsnNode("Method \"" + mn.name + "\" not supported in the state [" + sourceClass.getSimpleName() + "]"));
-                il.add(new MethodInsnNode(INVOKESPECIAL,
-                        "java/lang/UnsupportedOperationException", "<init>", "(Ljava/lang/String;)V"));
+                il.add(new MethodInsnNode(INVOKESPECIAL, "java/lang/UnsupportedOperationException", "<init>", "(Ljava/lang/String;)V"));
                 il.add(new InsnNode(ATHROW));
                 mn.maxStack = 3;
                 mn.maxLocals = Type.getArgumentTypes(mn.desc).length + 10;//+ 2;
@@ -398,8 +396,7 @@ public class Hollywood {
                 il.add(new TypeInsnNode(NEW, "java/lang/UnsupportedOperationException"));
                 il.add(new InsnNode(DUP));
                 il.add(new LdcInsnNode("Method invokation not supported. State instances produced by the actor.state() method can be only used for instanceof checking."));
-                il.add(new MethodInsnNode(INVOKESPECIAL,
-                        "java/lang/UnsupportedOperationException", "<init>", "(Ljava/lang/String;)V"));
+                il.add(new MethodInsnNode(INVOKESPECIAL, "java/lang/UnsupportedOperationException", "<init>", "(Ljava/lang/String;)V"));
                 il.add(new InsnNode(ATHROW));
                 mn.maxStack = 3;
                 mn.maxLocals = Type.getArgumentTypes(mn.desc).length + 10; //+ 2;
@@ -414,8 +411,7 @@ public class Hollywood {
     private static void forwardActorMethods(ClassNode classNode, String actorProxyClassName) {
         try {
             // Create a field containing the actor proxy
-            classNode.fields.add(new FieldNode(ACC_PUBLIC, "$actor",
-                    "Lcom/github/atemerev/hollywood/Actor;", null, null));
+            classNode.fields.add(new FieldNode(ACC_PUBLIC, "$actor", "Lcom/github/atemerev/hollywood/Actor;", null, null));
 
             // Read actor proxy prototype class
             ClassNode actorProxyPrototypeNode = new ClassNode();
@@ -507,6 +503,7 @@ public class Hollywood {
         }
     }
 
+    // Actor代理的原型. 通过ASM会给具体的Actor修改成满足自己逻辑的实现类
     @SuppressWarnings({"unchecked"})
     static class ActorProxyPrototype {
         private RootState $prevState;
@@ -608,8 +605,8 @@ public class Hollywood {
             // Call onEnter()s of the state (and all it's ancestors) we're entering
             $prevState = $state;
             $state = targetState;
-            Hollywood.getDispListener($state.getClass().getSuperclass()).forwardMessage(new StateChangedEvent(),
-                    (Actor) $state);            
+            Hollywood.getDispListener($state.getClass().getSuperclass())
+                    .forwardMessage(new StateChangedEvent(), (Actor) $state);
             for (Class cl : ancestorsToEnter) {
                 try {
                     Method onEnter = cl.getDeclaredMethod("onEnter");
@@ -630,7 +627,8 @@ public class Hollywood {
         }
 
         public final synchronized void processMessage(Object message) {
-            Hollywood.getDispListener($state.getClass().getSuperclass()).forwardMessage(message, (Actor) $state);
+            Hollywood.getDispListener($state.getClass().getSuperclass())
+                    .forwardMessage(message, (Actor) $state);
         }
     }
 
@@ -654,8 +652,7 @@ public class Hollywood {
             consNode.maxLocals = 10;
             InsnList consInstructions = new InsnList();
             consInstructions.add(new VarInsnNode(ALOAD, 0));
-            consInstructions.add(new MethodInsnNode(INVOKESPECIAL,
-                    asmClassName(aClass), "<init>", "()V"));
+            consInstructions.add(new MethodInsnNode(INVOKESPECIAL, asmClassName(aClass), "<init>", "()V"));
             consInstructions.add(new InsnNode(RETURN));
             consNode.instructions = consInstructions;
             proxyClassNode.methods.add(consNode);

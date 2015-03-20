@@ -19,13 +19,13 @@ import org.zbus.common.remoting.nio.Session;
 
 public class PubsubQueue extends MessageQueue {   
 	private static final long serialVersionUID = -593851217778104787L;
-
 	private static final Logger log = LoggerFactory.getLogger(PubsubQueue.class);	
 	
 	protected final BlockingQueue<Message> msgQ = new LinkedBlockingQueue<Message>();
 	//保留所有的订阅Session
 	transient ConcurrentMap<String, PullSession> sessMap = new ConcurrentHashMap<String, PullSession>(); 
-	public PubsubQueue(String broker, String name, ExecutorService executor, int mode){
+
+    public PubsubQueue(String broker, String name, ExecutorService executor, int mode){
 		super(broker, name, executor, mode); 
 	}
   

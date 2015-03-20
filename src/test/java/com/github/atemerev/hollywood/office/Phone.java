@@ -30,14 +30,18 @@ public abstract class Phone extends Actor {
 
     // Public interface
 
+    //备份: 因为接听电话是个很耗时的过程,所以启动一个新的线程来处理接听电话整个过程
+    //Standby-->Talking
     @AllowedStates(Standby.class)
     public abstract void respond(Call call, String greeting, MessageListener listener);
 
     //挂断
+    //Talking-->Standby
     @AllowedStates(Talking.class)
     public abstract void hangUp();
 
     //正在通话中
+    //Talking...
     @AllowedStates(Talking.class)
     public abstract void say(String phrase);
 
@@ -53,11 +57,15 @@ public abstract class Phone extends Actor {
                 public void run() {
                     try {
                         Thread.sleep(5);
+                        //带有@Listener的方法会被调用. 因为content是String类型,
+                        //所以会触发Secretary.OnCall的$(String phrase)执行
+                        //因为OnCall接收String类型的事件,而content就是String类型的.
                         listener.processMessage(call.getContent());
                     } catch (InterruptedException e) {
                     }
                 }
             }.start();
+            //由Standby转为正在通话中
             setState(Talking.class);
         }
     }

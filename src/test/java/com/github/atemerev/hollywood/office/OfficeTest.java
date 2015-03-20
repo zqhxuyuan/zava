@@ -51,7 +51,7 @@ public class OfficeTest {
         call = new Call("The work day is over. You can go home now.");
         secretary.processMessage(call);
 
-        //等待计数器归零. 什么时候计数器会减少: 发送信件的时候!
+        //等待计数器归零. 什么时候计数器会减少: 发送信件的时候! <--Working状态要退出前
         PostOffice.instance().getLatch().await();
         //通过计数器确保最后的2行代码最后才执行! 验证一天的工作量是否符合.
         Assert.assertEquals(2, PostOffice.instance().getSendLettersCount());

@@ -13,9 +13,15 @@ import org.zbus.common.remoting.Message;
 import org.zbus.common.remoting.nio.Session;
 import org.zbus.server.mq.store.MessageStore;
 
+/**
+ * 消息队列抽象类: 有多种实现类: PubsubQueue, ReplyQueue, RequestQueue
+ * Message + Queue分为: 实际上实现类都是对Message进行操作
+ * Pubsub  + Queue : 发布订阅消息的队列
+ * Reply   + Queue : 消息应答队列
+ * Request + Queue : 消息请求队列
+ */
 public abstract class MessageQueue implements Serializable{   
 	private static final long serialVersionUID = 5719362844495027862L;
-
 	private static final Logger log = LoggerFactory.getLogger(MessageQueue.class);
 	
 	protected final String broker; 
@@ -37,9 +43,13 @@ public abstract class MessageQueue implements Serializable{
 	
 	public abstract void produce(Message msg, Session sess) throws IOException;
 	public abstract void consume(Message msg, Session sess) throws IOException;
-	
+
+    //实现类自己实现消息分发机制
 	abstract void doDispatch() throws IOException;
+
 	public abstract void cleanSession();
+
+    //使用多线程执行消息分发流程
 	void dispatch(){
 		executor.submit(new Runnable() {
 			@Override
@@ -76,12 +86,10 @@ public abstract class MessageQueue implements Serializable{
 	public String getCreator() {
 		return creator;
 	} 
-	
-	
+
 	public void setCreator(String creator) {
 		this.creator = creator;
 	}
-	
 
 	public int getMode() {
 		return mode;
@@ -127,8 +135,7 @@ public abstract class MessageQueue implements Serializable{
 	
 	@Override
 	public String toString() {
-		return "MQ [name=" + name + ", creator=" + creator + ", createdTime="
-				+ createdTime + "]";
+		return "MQ [name=" + name + ", creator=" + creator + ", createdTime=" + createdTime + "]";
 	}
 
 	public MessageStore getMessageStore() {

@@ -1,2 +1,14 @@
 Hollywood Principle : Don't Call Me, I'll Call You!
 
+## Design
+1. Use ASM to generate proxy class
+
+## Example To Implement
+
+Secretary secretary = Hollywood.createActor(Secretary.class); //①
+secretary.goToWork(); //②
+Assert.assertTrue(secretary.state() instanceof Secretary.Working); //③
+
+1. 创建一个Actor, 会生成Actor的代理类
+2. 调用Actor的方法
+3. 判断Acotor当前的状态

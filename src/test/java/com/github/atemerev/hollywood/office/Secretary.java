@@ -54,7 +54,7 @@ public abstract class Secretary extends Actor {
 
         //好多电话要打出去啊: 先来的先处理, 不要让最先打电话的人等最久
         protected Queue<Call> callsOnHold = new LinkedList<Call>();
-        //一摞摞的信件啊.
+        //还有一堆信件要放到邮箱里
         protected Set<Letter> letters = new HashSet<Letter>();
 
         // Commands

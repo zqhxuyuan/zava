@@ -30,7 +30,9 @@ import org.zbus.server.mq.ReplyQueue;
 import org.zbus.server.mq.store.MessageStore;
 import org.zbus.server.mq.store.MessageStoreFactory;
 
-
+/**
+ * MQ服务器
+ */
 public class ZbusServer extends RemotingServer {
 	private static final Logger log = LoggerFactory.getLogger(ZbusServer.class);
 	
@@ -44,8 +46,7 @@ public class ZbusServer extends RemotingServer {
 	private MessageStore messageStore;
 	private String messageStoreType = "dummy"; 
 	
-	private String adminToken = "";  
-	
+	private String adminToken = "";
 	private AdminHandler adminHandler;
 	
 	
@@ -83,10 +84,8 @@ public class ZbusServer extends RemotingServer {
     			}
     			return null;
     		}
-    	} 
-    	
+    	}
     	return mq;
-    	
 	}
 	
 	public void init(){  
@@ -178,9 +177,7 @@ public class ZbusServer extends RemotingServer {
 			this.mqTable.putAll(mqs);
 			log.info("message store loaded");
 		}
-		
-		
-		
+
 		this.mqSessionCleanService.scheduleAtFixedRate(new Runnable() { 
 			@Override
 			public void run() {  
