@@ -19,7 +19,7 @@ public class Server {
     static class ServerRPCProcessor implements RPCProcessor {
         private final AtomicLong invokeTimesTotal = new AtomicLong(0);
 
-
+        //requestId, msg body
         public byte[] process(int upId, ByteBuffer upstream) {
             // String upstr =
             // new String(upstream.array(), upstream.position(),

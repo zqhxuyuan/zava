@@ -3,5 +3,4 @@ zava
 
 java implementation framework from github
 
-KeyValue Store Mem/File
-
+please see the wiki : https://github.com/zqhxuyuan/zava/wiki

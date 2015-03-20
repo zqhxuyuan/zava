@@ -23,8 +23,7 @@ public class DefaultRPCClient implements RPCClient {
     private List<Connection> connectionList = new ArrayList<Connection>();
     private final AtomicInteger requestId = new AtomicInteger(0);
 
-    private final ConcurrentHashMap<Integer, CallResponse> callRepTable =
-            new ConcurrentHashMap<Integer, CallResponse>(1000000);
+    private final ConcurrentHashMap<Integer, CallResponse> callRepTable = new ConcurrentHashMap<Integer, CallResponse>(1000000);
 
     private final ClientRPCProcessor clientRPCProcessor = new ClientRPCProcessor();
 
@@ -51,42 +50,33 @@ public class DefaultRPCClient implements RPCClient {
             return reponseId;
         }
 
-
         public void setReponseId(int reponseId) {
             this.reponseId = reponseId;
         }
-
 
         public ByteBuffer getResponseBody() {
             return responseBody;
         }
 
-
         public void setResponseBody(ByteBuffer responseBody) {
             this.responseBody = responseBody;
         }
-
 
         public CountDownLatch getCountDownLatch() {
             return countDownLatch;
         }
 
-
         public void setCountDownLatch(CountDownLatch countDownLatch) {
             this.countDownLatch = countDownLatch;
         }
-
 
         public CallResponse(int reponseId) {
             this.reponseId = reponseId;
         }
     }
 
-
     public DefaultRPCClient() {
-
     }
-
 
     public void start() {
         for (Connection c : this.connectionList) {
@@ -94,24 +84,22 @@ public class DefaultRPCClient implements RPCClient {
         }
     }
 
-
     public void shutdown() {
         for (Connection c : this.connectionList) {
             c.shutdown();
         }
     }
 
-
     private Connection findConnection(int id) {
         int pos = Math.abs(id) % this.connectionList.size();
         return this.connectionList.get(pos);
     }
 
-
     public ByteBuffer call(byte[] request) throws InterruptedException {
         int id = this.requestId.incrementAndGet();
         CallResponse response = new CallResponse(id);
         this.callRepTable.put(id, response);
+
         this.findConnection(id).putRequest(id, request);
         boolean waitOK = response.getCountDownLatch().await(5000, TimeUnit.MILLISECONDS);
         ByteBuffer result = null;
@@ -125,7 +113,6 @@ public class DefaultRPCClient implements RPCClient {
         this.callRepTable.remove(id);
         return result;
     }
-
 
     public boolean connect(InetSocketAddress remote) {
         SocketChannel sc = null;
@@ -160,7 +147,6 @@ public class DefaultRPCClient implements RPCClient {
 
         return false;
     }
-
 
     public boolean connect(InetSocketAddress remote, int cnt) {
         int i;

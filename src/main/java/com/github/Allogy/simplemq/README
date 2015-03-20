@@ -17,3 +17,7 @@ The original/upstream simple-mq project can be found here:
 > http://code.google.com/p/simple-mq/
 
 Some reference this project as "simplemq", and there are other versions & languages on github (e.g. in erlang).
+
+#### Design
+1. Use HSQLDB as store implementation. So, u know db's record,u know how msg represent.
+2. Message's order keep by db's time field.

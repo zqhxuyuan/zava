@@ -23,10 +23,10 @@ public class Client {
         for (long i = 0;; i++) {
             try {
                 String reqstr = "nice" + i;
+                //send msg body to server
                 ByteBuffer repdata = rpcClient.call(reqstr.getBytes());
                 if (repdata != null) {
-                    String repstr =
-                            new String(repdata.array(), repdata.position(), repdata.limit() - repdata.position());
+                    String repstr = new String(repdata.array(), repdata.position(), repdata.limit() - repdata.position());
                     System.out.println("call result, " + repstr);
                 }
                 else {
