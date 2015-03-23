@@ -11,6 +11,14 @@ import java.nio.ByteBuffer;
 /**
  * 简单功能测试，Client端
  *
+ * connect server OK
+ ReadSocketService service started
+ WriteSocketService service started
+ call result, nice0
+ call result, nice1
+ call result, nice2
+ call result, nice3
+
  * @author vintage.wang@gmail.com shijia.wxr@taobao.com
  */
 public class Client {
@@ -20,7 +28,7 @@ public class Client {
         System.out.println("connect server " + (connectOK ? "OK" : "Failed"));
         rpcClient.start();
 
-        for (long i = 0;; i++) {
+        for (long i = 0;i<10; i++) {
             try {
                 String reqstr = "nice" + i;
                 //send msg body to server

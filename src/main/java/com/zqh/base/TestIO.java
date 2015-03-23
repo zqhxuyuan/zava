@@ -40,7 +40,9 @@ public class TestIO {
         //testVarInt(36);
         //testVarInt(127);
 
-        testCopyWriteFile();
+        //testCopyWriteFile();
+
+        testByteSlice5();
     }
 
     public static void testCopyWriteFile()throws Exception{
@@ -122,6 +124,24 @@ public class TestIO {
             value >>>= 7;
         }
         buf.put((byte) (value & 0x7F));
+    }
+
+    private static void testByteSlice5() {
+        ByteBuffer buf = ByteBuffer.allocate(10);
+        ByteBuffer newBuf = buf.slice();
+
+        //修改原始buf
+        buf.put((byte)1);
+        buf.put((byte)2);
+        buf.put((byte)3);
+        buf.put((byte)4);
+        buf.put((byte)5);
+
+        System.out.println("buf remain:" + buf.remaining());
+        System.out.println("slice remain:" + newBuf.remaining());
+
+        System.out.println("buf pos:" + buf.position());
+        System.out.println("slice pos:" + newBuf.position());
     }
 
     private static void testByteSlice4() {

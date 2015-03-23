@@ -13,6 +13,15 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 简单功能测试，Server端
  *
+ * AcceptSocketService service started
+ receive new connection, /127.0.0.1:58516
+ ReadSocketService service started
+ WriteSocketService service started
+
+ read socket < 0
+ processReadEvent error
+ ReadSocketService service end
+
  * @author vintage.wang@gmail.com shijia.wxr@taobao.com
  */
 public class Server {

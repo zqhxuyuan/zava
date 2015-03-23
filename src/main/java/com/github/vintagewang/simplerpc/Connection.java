@@ -66,8 +66,26 @@ public class Connection {
         this.close();
     }
 
-    // 写服务. 注意这个是控制将响应结果写入缓冲区. 而不是客户端发起的请求数据的写入.
-    // 不能控制客户端发起的请求, 因为客户端一发起请求,就要立即对它响应,而不是控制!
+    //写服务. 由于Client和Server都会创建自己的Connection并都启动了Connection线程.
+    //所以Client和Server都会维护自己的2个读写线程. 构造函数的SocketChannel用于读和写的通道.
+    //如果是写操作,则要将数据写入到SocketChannel中, 这样对端就可以从SocketChannel中读取到数据
+    //如果是读操作,则将SocketChannel的数据(对端一定将数据放到了通道中)读到缓冲区中.当前端就可以直接从缓冲区中得到数据
+
+    //Client的SocketChannel
+    //1.写线程 SocketChannel.write(byteBuf),将byteBuf数据写到channel: Client使用Channel发送RPC调用请求, Server就可以在对端的Channel中读取数据
+    //4.读线程 SocketChannel.read(byteBuf),读取channel数据到byteBuf : Client的Channel读取Server端Channel写入的调用结果,保存到byteBuf中
+
+    //Server的SocketChannel
+    //3.写线程 SocketChannel.write(byteBuf),将byteBuf数据写到channel: Server将调用结果写到Channel,Client的对端Channel就可以从中读取数据
+    //2.读线程 SocketChannel.read(byteBuf),读取channel数据到byteBuf: Server使用Channel读取Client端Channel写入的请求消息,解析并执行RPC调用请求
+
+    // Client                |         Server
+    //       Channel            Channel
+    // 1.channel.write(buf)            2.channel.read(buf)
+    //     buf->channel   ----------->    channel->buf
+    //
+    // 4.channel.read(buf)             3.channel.write(buf)
+    //     buf<-channel   <-----------    channel<-buf
     class WriteSocketService extends ServiceThread {
         private final Selector selector;
         private final SocketChannel socketChannel;
@@ -86,12 +104,39 @@ public class Connection {
                     this.selector.select(1000);
                     int writeSizeZeroTimes = 0;
                     while (true) {
-                        //写入内存中空闲的ByteBuffer节点,参数控制了写入的速度,每隔100ms才允许写一次-->流控
-                        //findReadableNode(). 写的时候要找出可以读的节点,并将读节点的数据写到连接通道中.
+                        //socketChannel.write(byteBuffer) 将缓冲区Buffer数据写入到SocketChannel中.
+                        //那么缓冲区Buffer一定是有数据才可以写的.
+                        //按照网络编程CS的模式,只要CS双方建立好连接通道,客户端写入数据,服务端立刻就可以从通道中读取出数据.
+                        //然后服务端调用实现类方法,并返回结果给客户端(可以新创建一个线程来处理调用逻辑防止只用单个线程处理引起的阻塞).
+                        //最后服务端将调用结果写到通道中,客户端就可以从通道中读出调用结果.
+
+                        //通道读写的参数是ByteBuffer,一般要设置好足够的缓冲区大小来保证消息可以正常发送.
+                        //在正常编程模式下,缓冲区的使用是一次性的.并且都是手动构造的:构造一个缓冲区填充数据,将数据写入到通道中.
+                        //或者构造一个缓冲区,从通道中将数据读取到缓冲区中. 这里缓冲区要根据数据的大小进行设置.
+
+                        //写线程是将缓冲区的数据写到通道中,比如客户端发起调用请求会将请求消息写到通道中,或者服务端将调用结果写到通道中.
+                        //缓冲区的数据都是来自于ByteBufferNode currentReadNode的byteBufferRead
+                        //这里引入ByteBufferNode的目的是解决: 缓冲区的管理,以及缓冲区的写优化!
+                        //写优化的一个目的是流控: 控制客户端大量发起请求,或者控制服务端一下子返回批量调用结果.
+
+                        //返回ByteBufferNode currentReadNode条件是: byteBufferRead.position < writeOffset
+                        //假设客户端在100ms内发起了多个请求调用,writeOffset保存了写缓冲区下一次写入的位置.
+                        //通过流控不需要在100ms内立即将多个请求调用发给服务端.
+                        //读缓冲区还没使用,写线程100ms后判断可以读,则一次性将读缓冲区的内容都写到通道中.
+                        //TODO 问题是: 读过的数据会不会被再读到? 如何更新byteBufferRead的position?
                         ByteBufferNode node = Connection.this.linkedByteBufferList.waitForPut(100);
                         if (node != null) {
+                            //byteBuffer.limit(writeOffset) 读取时最多不能超过写的位置,因为当前写位置之后没有数据了!
                             node.getByteBufferRead().limit(node.getWriteOffset().get());
+                            //为什么使用读缓冲区将数据发送给通道? 在ByteBufferNode的ByteBuffer byteBufferRead上有解释
+                            //简单说就是如果使用节点的写缓冲区,要实现获取数据,则要定位到写之前的位置,再读取数据.
+                            //使用额外的读缓冲区,共享写缓冲区的内容,在不操作写缓冲区,一样可以读取出写缓冲区的数据.
+                            //让写缓冲区专注于写,读缓冲区只负责读.
                             int writeSize = this.socketChannel.write(node.getByteBufferRead());
+                            //ByteBufferNode currentReadNode在将数据写到通道后,其position会自动往后移动,
+                            //这样确保了读过的数据不会被再次重复读取. -->
+                            //有点类似生产者消费者模式:客户端发起请求,是生产者,将消息放入缓冲队列,写线程是消费者,从队列中取出消息进行消费.
+                            System.out.println("readable node position:"+node.getByteBufferRead().position());
                             if (writeSize > 0) {
                             }
                             else if (writeSize == 0) {
@@ -142,6 +187,11 @@ public class Connection {
         }
     }
 
+    //读线程. 假设客户端使用自己的Connection.socketChannel发送调用请求, 则服务端使用自己的Connection.socketChannel接收数据
+    //注意: 客户端一旦将请求发往SocketChannel, 则服务端的SocketChannel立即就能收到数据.
+    //这个过程并没有通过流控进行延迟/消费. 这和传统的IO编程模式一样.
+
+    //假设上一步是客户端的写线程通过流控使用读缓冲区的消息内容写到socketChannel中.这里服务端的读线程开始工作了.
     class ReadSocketService extends ServiceThread {
         private final Selector selector;
         private final SocketChannel socketChannel;
@@ -205,7 +255,9 @@ public class Connection {
         //如果缓冲区没有剩余空间可以写,则无法读取对端的数据.
         while (this.byteBufferRead.hasRemaining()) {
             try {
-                //从连接通道中读取数据到缓冲区中
+                //从连接通道中读取数据到缓冲区byteBufferRead中.注意现在的数据来源是socketChannel.
+                //假设是客户端发送的调用请求,会将消息写到客户端的socketChannel中
+                //则这里的服务端的socketChannel因为是和客户端建立的连接通道,所以可以立即获取到客户端发送的数据.
                 int readSize = this.socketChannel.read(this.byteBufferRead);
                 if (readSize > 0) {
                     readSizeZeroTimes = 0;
@@ -233,10 +285,10 @@ public class Connection {
     }
 
     private void dispatchReadRequest() {
-        //缓冲区用来写对端的数据: 读取对端的数据写到自己的缓冲区中.
+        //缓冲区用来填充对端发送过来的数据: 读取对端的数据写/填充到自己的缓冲区中.
         //读和写的概念其实是相对的. 比如读取数据,然后写到缓冲区中.
         //byteBufferRead在上一步已经通过通道读取数据了: socketChannel.read(byteBufferRead)
-        //那么byteBufferRead应该是读完后有数据了. 这个时候的位置岂不是写完了的位置??
+        //那么byteBufferRead应该是读完后有数据了. 这个时候的位置岂不是写完了的位置?? THAT'S RIGHT!
 
         //这个writePosition其实是下一条消息的写入位置. 因为当前消息已经写入到缓冲区了.
         //这个方法是分发读请求,所以要从缓冲区中解析出发送过来的请求消息(request),交给对应的业务逻辑处理:rpcServerProcessor.process
@@ -280,7 +332,8 @@ public class Connection {
                     request.limit(this.dispatchPostion + 8 + msgSize);
                     //--------------------
 
-                    //请求消息读取完毕,将读取指针设置到消息的尾部. 即一开始的writePostion
+                    //请求消息读取完毕,将读取指针设置到消息的尾部. 即一开始的writePosition
+                    //通过控制writePosition,目的是重用一开始创建出来的缓冲区. 这个缓冲区大小和ByteBufferNode的大小一样
                     this.byteBufferRead.position(writePosition);
                     //dispatchPostion为下一条消息的偏移量做准备
                     this.dispatchPostion += 8 + msgSize;
