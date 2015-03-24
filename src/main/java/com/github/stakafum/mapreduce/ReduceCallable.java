@@ -13,7 +13,9 @@ import java.util.concurrent.Callable;
  * @param <OutputReduceKey> Reduce処理の出力のキークラス
  * @param <OutputReduceValue> Reduce処理の出力のバリュークラス
  */
-public class ReduceCallable<IntermediateKey, IntermediateValue,OutputReduceKey, OutputReduceValue> implements Callable<Reducer<IntermediateKey, IntermediateValue,OutputReduceKey, OutputReduceValue>>{
+public class ReduceCallable<IntermediateKey, IntermediateValue,OutputReduceKey, OutputReduceValue>
+        implements Callable<Reducer<IntermediateKey, IntermediateValue,OutputReduceKey, OutputReduceValue>>{
+
     Reducer<IntermediateKey, IntermediateValue,OutputReduceKey, OutputReduceValue> reducer;
 
     ReduceCallable(){

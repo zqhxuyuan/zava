@@ -14,6 +14,7 @@ public class Main {
      */
     public static void main(String[] args) {
         String filename = "/home/hadoop/data/helloworld.txt";
+        filename = "/home/hadoop/nohup.out";
 
         MapReduce<Integer, String, String, Integer, String, Integer> wcMR =
                 new MapReduce<>(MapWC.class, ReduceWC.class, "MAP_REDUCE");

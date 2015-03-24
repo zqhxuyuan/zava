@@ -1,5 +1,10 @@
 package com.github.stakafum.mapreduce;
 
+/**
+ * 根据key进行分组,一个key会有多个values. 多个value使用GroupedValues封装
+ * @param <K>
+ * @param <V>
+ */
 public class GroupedKeyValue<K, V> {
     K key;
     GroupedValues<V> gValues;
