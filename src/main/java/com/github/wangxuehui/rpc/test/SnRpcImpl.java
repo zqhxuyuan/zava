@@ -1,4 +1,4 @@
-package com.github.wangxuehui.rpc.client;
+package com.github.wangxuehui.rpc.test;
 
 // implement interface
 public class SnRpcImpl implements SnRpcInterface {

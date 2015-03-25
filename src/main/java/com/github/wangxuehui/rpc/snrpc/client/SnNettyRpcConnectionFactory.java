@@ -19,15 +19,11 @@ public class SnNettyRpcConnectionFactory implements SnRpcConnectionFactory{
 	
 	@Override
 	public SnRpcConnection getConnection() throws Throwable {
-		// TODO Auto-generated method stub
-		return new SnNettyRpcConnection(this.serverAddr.getHostName(),
-				this.serverAddr.getPort());
+		return new SnNettyRpcConnection(this.serverAddr.getHostName(), this.serverAddr.getPort());
 	}
 
 	@Override
 	public void recycle(SnRpcConnection connection) throws Throwable {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

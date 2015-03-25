@@ -22,19 +22,8 @@ import org.slf4j.LoggerFactory;
 public class CommonSnRpcClient implements SnRpcClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SnRpcConfig.class);
 
-	private SnRpcInvoker invoker = new SnRpcInvoker();
 	private SnRpcConnectionFactory snRpcConnectionFactory;
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T proxy(Class<T> interfaceClass) throws Throwable {
-		// TODO Auto-generated method stub
-		if (!interfaceClass.isInterface()) {
-			throw new IllegalArgumentException(interfaceClass.getName() + " "
-					+ "is not an interface");
-		}
-		return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(),
-				new Class<?>[] { interfaceClass }, invoker);
-	}
+    private SnRpcInvoker invoker = new SnRpcInvoker();
 
 	public CommonSnRpcClient(SnRpcConnectionFactory snRpcConnectionFactory) {
 		if(null == snRpcConnectionFactory) {
@@ -42,34 +31,40 @@ public class CommonSnRpcClient implements SnRpcClient {
 		}
 		this.snRpcConnectionFactory = snRpcConnectionFactory;
 	}
-	
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T proxy(Class<T> interfaceClass) throws Throwable {
+        if (!interfaceClass.isInterface()) {
+            throw new IllegalArgumentException(interfaceClass.getName() + " " + "is not an interface");
+        }
+        return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass }, invoker);
+    }
+
 	/**
 	 * invoker
 	 */
-
 	private class SnRpcInvoker implements InvocationHandler {
 
 		@Override
-		public Object invoke(Object proxy, Method method, Object[] args)
-				throws Throwable {
-			// TODO Auto-generated method stub
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			String className = method.getDeclaringClass().getName();
 			List<String> parameterTypes = new LinkedList<String>();
 			for (Class<?> parameterType : method.getParameterTypes()) {
 				parameterTypes.add(parameterType.getName());
 			}
 			String requestID = generateRequestID();
+            //封装rpc调用请求
 			SnRpcRequest request = new SnRpcRequest(requestID, className,
-					method.getName(), parameterTypes.toArray(new String[0]),
-					args);
+					method.getName(), parameterTypes.toArray(new String[0]), args);
+            //这是客户端要收到的调用结果
 			SnRpcResponse response = null;
 			SnRpcConnection connection = null;
 			try {
 				connection = getConnection();
 				response = connection.sendRequest(request);
 			}catch(Throwable t){
-				LOGGER.warn("send rpc request fail! request: <{}>",
-						new Object[] { request }, t);
+				LOGGER.warn("send rpc request fail! request: <{}>", new Object[] { request }, t);
 				throw new RuntimeException(t);
 			}finally {
 				recycle(connection);
@@ -81,6 +76,7 @@ public class CommonSnRpcClient implements SnRpcClient {
 			}
 		}
 
+        //通过工厂类获得连接对象
 		private SnRpcConnection getConnection() throws Throwable {
 			return snRpcConnectionFactory.getConnection();
 		}

@@ -1,0 +1,53 @@
+## Overview
+
+使用Netty作为RPC客户端和服务端的通信. RPC的通信机制和传统的一样,只不过消息的发送使用Netty进行编解码并交给handler处理.
+
+## WorkFlow
+
+1. 创建SnNettyRpcConnectionFactory连接工厂类传给CommonSnRpcClient,这样客户端在需要连接对象Connection时,可以通过工厂类获得
+2. 调用SnRpcClient.proxy()传入接口类, 会使用动态代理调用到SnRpcInvoker.invoke()方法
+3. 动态调用能够获取到类,方法,参数等信息,封装成SnRpcRequest,调用SnRpcConnection.sendRequest将调用请求发送出去
+4. SnNettyRpcConnection采用Netty实现,绑定了SnNettyRpcConnection处理类,Request编码,Response解码
+5. 在sendRequest中将SnRpcRequest通过连接到服务端的Channel将请求消息发送出去
+6. 服务端的SnNettyRpcServer在启动Netty服务器时,注册了Request解码,Response编码,和SnNettyRpcServerHandler处理类
+7. SnNettyRpcServerHandler的channelRead0的SnRpcRequest msg参数就是客户端发送的调用消息的封装对象.
+8. 服务端Handler解析出调用请求,反射调用,并将结果设置到SnRpcResponse,最后将响应返回给ChannelHandlerContext
+9. 客户端SnNettyRpcConnection发送完调用请求后就一直处于等待状态,当channelRead0读取到数据后,它收到的消息对象就是
+   SnRpcResponse msg响应对象,即服务端发送给客户端的调用结果. 客户端读取到响应后不再等待,将结果返回给调用者.
+
+## Netty Msg
+
+根据客户端发送调用请求,到服务端接收,反射调用,将调用结果发送给客户端的整个过程.
+消息包括两种类型请求消息SnRpcRequest,响应结果SnRpcResponse.
+消息在客户端和服务端之间要进行编解码的转换, 编解码的转换Netty都帮我们实现了,我们关注的都是Request,Response对象.
+
+客户端的Netty绑定顺序是:
+SnNettyRpcConnection,Request编码,Response解码
+
+服务端的Netty绑定顺序是:
+Request解码,Response编码,SnNettyRpcServerHandler
+
+分别对应了RPC调用的过程的消息传递的路径,和业务处理的过程:
+1. 客户端使用Connection发送连接,将调用请求用Request编码发送给服务端
+2. 服务端接受连接,使用Request解码获取到消息,并用Handler进行业务处理
+3. 服务端将调用结果用Response编码,发送给客户端
+4. 客户端使用Response解码得到响应结果.
+
+## 消息编解码
+
+消息的序列化和反序列化有多种选择: JDK自带的序列化,XML,JSON,protobuf,kryo等多种实现机制.
+通过在zookeeper中配置序列化的类型,可以动态切换,配置项在两个配置文件中也都是一样的:snrpc.serializataion.type
+
+## Zookeeper
+
+服务端读取配置文件,并将Netty的服务端口写在ZooKeeper节点中. 这样客户端可以读取Zookeeper节点来获取Netty的服务端口
+服务端的ServiceProvider可以有多个ZooKeeper服务器,都写在同一个目录/skyim下:有多个服务器则创建多个子节点.
+[zk: localhost:2181(CONNECTED) 1] ls /skyim
+[provider0000000003]
+[zk: localhost:2181(CONNECTED) 2] get /skyim/provider0000000003
+skyim:127.0.0.1:8081
+
+客户端也要读取同一个集群的ZooKeeper节点,所以snrpcclient.properties和snrpcserver.properties配置的zk要一致.
+客户端连接到的ZooKeeper可以是集群中随机的一个zk节点.
+
+这里ZooKeeper只是用来保存了Netty服务端的连接信息(地址和端口). zk的一个典型的应用场景是作为配置中心ConfigCenter.

@@ -22,8 +22,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 /**
  * @author skyim E-mail:wxh64788665@gmail.com
  */
-public class SnNettyRpcConnection extends
-		SimpleChannelInboundHandler<SnRpcResponse> implements SnRpcConnection {
+public class SnNettyRpcConnection extends SimpleChannelInboundHandler<SnRpcResponse> implements SnRpcConnection {
 
 	private InetSocketAddress inetAddr;
 	private SnRpcResponse response;
@@ -31,12 +30,10 @@ public class SnNettyRpcConnection extends
 
 
 	public SnNettyRpcConnection(String host, int port) {
-		// TODO Auto-generated constructor stub
 		this.inetAddr = new InetSocketAddress(host, port);
 	}
 
-	public SnRpcResponse sendRequest(final SnRpcRequest request)
-			throws Throwable {
+	public SnRpcResponse sendRequest(final SnRpcRequest request) throws Throwable {
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
 			Bootstrap b = new Bootstrap(); // (1)
@@ -46,6 +43,7 @@ public class SnNettyRpcConnection extends
 			b.handler(new ChannelInitializer<SocketChannel>() {
 				@Override
 				public void initChannel(SocketChannel ch) throws Exception {
+                    //依次处理连接信息SnNettyRpcConnection,Request编码,Response解码
 					ch.pipeline().addLast(new SnRpcResponseDecoder());
 					ch.pipeline().addLast(new SnRpcRequestEncoder());
 					ch.pipeline().addLast(SnNettyRpcConnection.this);
@@ -53,8 +51,11 @@ public class SnNettyRpcConnection extends
 			});
 
 			Channel ch = b.connect(inetAddr).sync().channel();
+            //发送rpc调用请求
 			ch.writeAndFlush(request);
+            //等待收到rpc调用结果
 			waitForResponse();
+            //执行到这里一定是收到了服务端的响应
 			SnRpcResponse resp = this.response;
 			if (resp != null) {
 				ch.closeFuture().sync();
@@ -68,18 +69,20 @@ public class SnNettyRpcConnection extends
 	public void waitForResponse() {
 		synchronized (obj) {
 			try {
+                //如果channelRead0收到消息,则说明服务端的响应数据过来了,不需要再等待了,
+                //执行上面方法sendRequest中waitForResponse()后面的语句
 				obj.wait();
 			} catch (InterruptedException e) {
 			}
 		}
 	}
 
+    //如果读取到服务端发送的消息,那么这个消息就是服务端发送的rpc调用结果的响应信息
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, SnRpcResponse msg)
-			throws Exception {
-		// TODO Auto-generated method stub
+	protected void channelRead0(ChannelHandlerContext ctx, SnRpcResponse msg) throws Exception {
 		response = msg;
 		synchronized (obj) {
+            //触发obj通知有结果了
 			obj.notifyAll();
 		}
 	}

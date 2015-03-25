@@ -22,7 +22,7 @@ public class RpcImplementor implements Serializable{
 	public RpcImplementor(Class<?> processorClass){
 		super();
 		this.processorClass = processorClass;
-		this.methodAccess   = MethodAccess.get(processorClass);
+		//this.methodAccess   = MethodAccess.get(processorClass);
 	}
 
 	public Class<?> getProcessorClass() {

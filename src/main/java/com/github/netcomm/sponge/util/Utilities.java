@@ -1,4 +1,4 @@
-package com.jd.sponge.util;
+package com.github.netcomm.sponge.util;
 
 
 

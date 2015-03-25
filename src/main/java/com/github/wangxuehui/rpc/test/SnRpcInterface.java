@@ -1,4 +1,4 @@
-package com.github.wangxuehui.rpc.client;
+package com.github.wangxuehui.rpc.test;
 
 //define an interface:
 public interface SnRpcInterface {

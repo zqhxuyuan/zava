@@ -368,42 +368,76 @@ public class Call {
 
     @Override
     public String toString() {
-        return "Call{" +
-                "callId='" + callId + '\'' +
-                ", title='" + title + '\'' +
-                ", createTime='" + createTime + '\'' +
-                ", isUrgent='" + isUrgent + '\'' +
-                ", catalogId='" + catalogId + '\'' +
-                ", comeFrom='" + comeFrom + '\'' +
-                ", kindId='" + kindId + '\'' +
-                ", eventTime='" + eventTime + '\'' +
-                ", eventAddr='" + eventAddr + '\'' +
-                ", eventZoneId='" + eventZoneId + '\'' +
-                ", callerName='" + callerName + '\'' +
-                ", callerGender='" + callerGender + '\'' +
-                ", callerCellphone='" + callerCellphone + '\'' +
-                ", callerEmail='" + callerEmail + '\'' +
-                ", callerProf='" + callerProf + '\'' +
-                ", callerCompany='" + callerCompany + '\'' +
-                ", callerFax='" + callerFax + '\'' +
-                ", callerAddr='" + callerAddr + '\'' +
-                ", callerPostcode='" + callerPostcode + '\'' +
-                ", callerIp='" + callerIp + '\'' +
-                ", isDel='" + isDel + '\'' +
-                ", repeatFlagId='" + repeatFlagId + '\'' +
-                ", isDispatch='" + isDispatch + '\'' +
-                ", isChildDispatch='" + isChildDispatch + '\'' +
-                ", isPublic='" + isPublic + '\'' +
-                ", privateId='" + privateId + '\'' +
-                ", handlerStatus='" + handlerStatus + '\'' +
-                ", editorId='" + editorId + '\'' +
-                ", runtimeId='" + runtimeId + '\'' +
-                ", isDisplay='" + isDisplay + '\'' +
-                ", validateCode='" + validateCode + '\'' +
-                ", replySiterId='" + replySiterId + '\'' +
-                ", callerId='" + callerId + '\'' +
-                ", hastenNum='" + hastenNum + '\'' +
-                ", hits='" + hits + '\'' +
-                '}';
+        return "" +
+
+                (null == callId || callId.equals("null") ? "" : callId) + '\t' +
+
+                (null == title || title.equals("null") ? "" : title) + '\t' +
+
+                (null == createTime || createTime.equals("null") ? "" : createTime) + '\t' +
+
+                (null == isUrgent || isUrgent.equals("null") ? "" : isUrgent) + '\t' +
+
+                (null == catalogId || catalogId.equals("null") ? "" : catalogId) + '\t' +
+
+                (null == comeFrom || comeFrom.equals("null") ? "" : comeFrom) + '\t' +
+
+                (null == kindId || kindId.equals("null") ? "" : kindId) + '\t' +
+
+                (null == eventTime || eventTime.equals("null") ? "" : eventTime) + '\t' +
+
+                (null == eventAddr || eventAddr.equals("null") ? "" : eventAddr) + '\t' +
+
+                (null == eventZoneId || eventZoneId.equals("null") ? "" : eventZoneId) + '\t' +
+
+                (null == callerName || callerName.equals("null") ? "" : callerName) + '\t' +
+
+                (null == callerGender || callerGender.equals("null") ? "" : callerGender) + '\t' +
+
+                (null == callerCellphone || callerCellphone.equals("null") ? "" : callerCellphone) + '\t' +
+
+                (null == callerEmail || callerEmail.equals("null") ? "" : callerEmail) + '\t' +
+
+                (null == callerProf || callerProf.equals("null") ? "" : callerProf) + '\t' +
+
+                (null == callerCompany || callerCompany.equals("null") ? "" : callerCompany) + '\t' +
+
+                (null == callerFax || callerFax.equals("null") ? "" : callerFax) + '\t' +
+
+                (null == callerAddr || callerAddr.equals("null") ? "" : callerAddr) + '\t' +
+
+                (null == callerPostcode || callerPostcode.equals("null") ? "" : callerPostcode) + '\t' +
+
+                (null == callerIp || callerIp.equals("null") ? "" : callerIp) + '\t' +
+
+                (null == isDel || isDel.equals("null") ? "" : isDel) + '\t' +
+
+                (null == repeatFlagId || repeatFlagId.equals("null") ? "" : repeatFlagId) + '\t' +
+
+                (null == isDispatch || isDispatch.equals("null") ? "" : isDispatch) + '\t' +
+
+                (null == isChildDispatch || isChildDispatch.equals("null") ? "" : isChildDispatch) + '\t' +
+
+                (null == isPublic || isPublic.equals("null") ? "" : isPublic) + '\t' +
+
+                (null == privateId || privateId.equals("null") ? "" : privateId) + '\t' +
+
+                (null == handlerStatus || handlerStatus.equals("null") ? "" : handlerStatus) + '\t' +
+
+                (null == editorId || editorId.equals("null") ? "" : editorId) + '\t' +
+
+                (null == runtimeId || runtimeId.equals("null") ? "" : runtimeId) + '\t' +
+
+                (null == isDisplay || isDisplay.equals("null") ? "" : isDisplay) + '\t' +
+
+                (null == validateCode || validateCode.equals("null") ? "" : validateCode) + '\t' +
+
+                (null == replySiterId || replySiterId.equals("null") ? "" : replySiterId) + '\t' +
+
+                (null == callerId || callerId.equals("null") ? "" : callerId) + '\t' +
+
+                (null == hastenNum || hastenNum.equals("null") ? "" : hastenNum) + '\t' +
+
+                (null == hits || hits.equals("null") ? "" : hits) + '\n';
     }
 }

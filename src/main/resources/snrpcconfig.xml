@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+    <!-- rpc interface services -->
+    <rpcServices>
+        <rpcService name="SnRpcInterface" interface="com.github.wangxuehui.rpc.test.SnRpcInterface" overload="true">
+           <rpcImplementor  class="com.github.wangxuehui.rpc.test.SnRpcImpl"/>
+        </rpcService>
+        <!--可以定义多个rpc服务-->
+    </rpcServices>
+</application>

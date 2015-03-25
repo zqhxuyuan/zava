@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
  * 类说明
  */
 public class ServiceConsumer {
- 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceConsumer.class);
+
 	SnRpcConfig snRpcConfig = SnRpcConfig.getInstance();
 
     // 用于等待 SyncConnected 事件触发后继续执行当前线程

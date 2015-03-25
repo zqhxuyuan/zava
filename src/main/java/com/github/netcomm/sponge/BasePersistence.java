@@ -1,8 +1,9 @@
-package com.jd.sponge;
+package com.github.netcomm.sponge;
 
 import java.util.ArrayList;
-import com.jd.sponge.util.DataByteArrayOutputStream;
-import com.jd.sponge.util.Utilities;
+
+import com.github.netcomm.sponge.util.DataByteArrayOutputStream;
+import com.github.netcomm.sponge.util.Utilities;
 
 public abstract class BasePersistence implements PersistenceIntf
 {

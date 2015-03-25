@@ -29,16 +29,13 @@ public class SnRpcConfig {
 	}
 
 	public void loadProperties(String fileName) {
-		if (StringUtil.isEmpty(fileName))
-			throw new SnRpcException("snRpcConfig name is null...");
+		if (StringUtil.isEmpty(fileName)) throw new SnRpcException("snRpcConfig name is null...");
 		InputStream inputStream = null;
 		try {
-			inputStream = Thread.currentThread().getContextClassLoader()
-					.getResourceAsStream(fileName);
+			inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
 			properties.load(inputStream);
 		} catch (IOException e) {
-			throw new SnRpcException(" snRpcConfig file load failed... "
-					+ fileName);
+			throw new SnRpcException(" snRpcConfig file load failed... " + fileName);
 		} finally {
 			try {
 				if (inputStream != null)
@@ -48,8 +45,7 @@ public class SnRpcConfig {
 			}
 		}
 		if (properties == null)
-			throw new RuntimeException("Properties file loading failed: "
-					+ fileName);
+			throw new RuntimeException("Properties file loading failed: " + fileName);
 	}
 
 	public Properties getProperties() {
@@ -74,14 +70,18 @@ public class SnRpcConfig {
 	}
 	
 	public String getPropertiesFile(){
-		String f = properties.getProperty("properties.file","config.xml");
+		String f = properties.getProperty("properties.file","snrpcconfig.xml");
 		return f.trim();
 	}
 	
 	public boolean getDevMod(){
 		String dev = properties.getProperty("snrpc.dev","false");
 		return Boolean.parseBoolean(dev);
-		
 	}
 
+    public static void main(String[] args) {
+        SnRpcConfig config = SnRpcConfig.getInstance();
+        config.loadProperties("snrpcserver.properties");
+        System.out.println(config.getHttpPort());
+    }
 }

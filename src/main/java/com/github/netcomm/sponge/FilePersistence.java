@@ -1,9 +1,10 @@
-package com.jd.sponge;
+package com.github.netcomm.sponge;
 
 import java.io.File;
 import java.io.RandomAccessFile;
-import com.jd.sponge.util.RAcsFile;
-import com.jd.sponge.util.Utilities;
+
+import com.github.netcomm.sponge.util.RAcsFile;
+import com.github.netcomm.sponge.util.Utilities;
 
 public class FilePersistence extends BasePersistence
 {

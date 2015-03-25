@@ -22,10 +22,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 public class SnRpcRequestDecoder extends ByteToMessageDecoder {
 
 	@Override
-	protected void decode(ChannelHandlerContext ctx, ByteBuf in,
-			List<Object> out) throws Exception {
-		// TODO Auto-generated method stub
-
+	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		if(in.readableBytes() < 4) {
 			return;
 		}
@@ -51,8 +48,8 @@ public class SnRpcRequestDecoder extends ByteToMessageDecoder {
     	    final KryoSerializer kryo = new KryoSerializer();
     	    snRpcRequest  =  kryo.deserialize(body, SnRpcRequest.class);
        }else if(Const.SERIALIZATION_PROTOSTUFF.equals(type)){
-   	    final ProtostuffSerializer protostuff = new ProtostuffSerializer();
-   	    snRpcRequest  =  protostuff.deserialize(body, SnRpcRequest.class);
+            final ProtostuffSerializer protostuff = new ProtostuffSerializer();
+            snRpcRequest  =  protostuff.deserialize(body, SnRpcRequest.class);
        }else if(Const.SERIALIZATION_FASTERXML.equals(type)){
      	    final FasterxmlSerializer fastxml = new FasterxmlSerializer();
        	    snRpcRequest  =  fastxml.deserialize(body, SnRpcRequest.class);
@@ -63,14 +60,11 @@ public class SnRpcRequestDecoder extends ByteToMessageDecoder {
    	        final JdkObjectSerializer jdk = new JdkObjectSerializer();
      	    snRpcRequest  =  jdk.deserialize(body, SnRpcRequest.class);
        }else {
-    	   final ProtobufSerializer protobuf = new ProtobufSerializer();
-   	       snRpcRequest  =  protobuf.deserialize(body, SnRpcRequest.class);
+    	    final ProtobufSerializer protobuf = new ProtobufSerializer();
+   	        snRpcRequest  =  protobuf.deserialize(body, SnRpcRequest.class);
        }
-
 
 	   out.add(snRpcRequest);
 	}
-
-
 
 }

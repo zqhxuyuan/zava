@@ -33,7 +33,8 @@ public class SnNettyRpcServer implements SnRpcServer{
 	private SnRpcConfig snRpcConfig = SnRpcConfig.getInstance();
 	private Map<String,Object> handlersMap;
 	private int httpListenPort;
-	
+
+    //传递自定义Handler对象, 加入到handlerMap中: key是接口名称,value是接口的实现类
 	public SnNettyRpcServer(Object...  handlers){
 		snRpcConfig.loadProperties("snrpcserver.properties");
 		this.handlersMap = HandlerMapper.getHandlerMap(handlers);
@@ -44,15 +45,21 @@ public class SnNettyRpcServer implements SnRpcServer{
 		this.handlersMap = HandlerMapper.getHandlerMap(handlers);
 	}
 	
-	
+	//启动服务器
 	public void start() throws Throwable {
-		// TODO Auto-generated method stub
 		initServerInfo();
 		initHttpBootstrap();
 	}
 
+    private void initServerInfo() {
+        httpListenPort = snRpcConfig.getHttpPort();
+        //解析XML文件. 在构造服务器的时候,已经将接口和对应的实现类注册到了handlerMap中.为什么还要使用xml解析??
+        //解析后的结果是将xml中服务名和RpcService对象放入SnNettyRpcServerHandler的serviceMap中.
+        new ParseXmlToService().parse();
+    }
+
+    //启动Netty的HTTP服务
 	private void initHttpBootstrap() throws InterruptedException {
-		// TODO Auto-generated method stub
 		if(SnRpcConfig.getInstance().getDevMod()){
 			StatisticsService.reportPerformance();
 		}
@@ -64,9 +71,10 @@ public class SnNettyRpcServer implements SnRpcServer{
             ServerBootstrap b = new ServerBootstrap(); // (2)
             b.group(bossGroup, workerGroup)
              .channel(NioServerSocketChannel.class) // (3)
-             .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+             .childHandler(new ChannelInitializer<SocketChannel>() { // (4) Handler
                  @Override
                  public void initChannel(SocketChannel ch) throws Exception {
+                     //服务端的顺序是从Request解码,Response编码,再到Handler
                 	 ch.pipeline().addLast(new SnRpcRequestDecoder());
                 	 ch.pipeline().addLast(new SnRpcResponseEncoder());
                      ch.pipeline().addLast(new SnNettyRpcServerHandler(handlersMap));
@@ -93,7 +101,6 @@ public class SnNettyRpcServer implements SnRpcServer{
 	}
 
 	private boolean checkPortConfig(int listenPort) {
-		// TODO Auto-generated method stub
 		if(listenPort < 0 || listenPort > 65536){
 			throw new IllegalArgumentException("Invalid start port: "+listenPort);
 		}
@@ -122,12 +129,4 @@ public class SnNettyRpcServer implements SnRpcServer{
 		
 		return false;
 	}
-
-	private void initServerInfo() {
-		// TODO Auto-generated method stub
-		httpListenPort = snRpcConfig.getHttpPort();
-		new ParseXmlToService().parse();
-		
-	}
-
 }

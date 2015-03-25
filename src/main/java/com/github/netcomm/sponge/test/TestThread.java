@@ -1,11 +1,10 @@
-package com.jd.sponge.test;
+package com.github.netcomm.sponge.test;
 
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.jd.sponge.SpongeThreadPoolExecutor;
+import com.github.netcomm.sponge.SpongeThreadPoolExecutor;
 
 
 public class TestThread {

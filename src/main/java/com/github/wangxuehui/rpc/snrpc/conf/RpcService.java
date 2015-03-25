@@ -2,22 +2,22 @@ package com.github.wangxuehui.rpc.snrpc.conf;
 /**
  * RpcService 
  * <rpcServices>
- * 	 <rpcService name="SnRpcInterface"
- * 			interface="org.stefan.snrpc.server.SnRpcInterface" overload="true">
- *		 		<rpcImplementor class="org.stefan.snrpc.server.SnRpcImpl"/> 
- *		  </rpcService>
+ * 	 <rpcService name="SnRpcInterface" interface="org.stefan.snrpc.server.SnRpcInterface" overload="true">
+ *		 <rpcImplementor class="org.stefan.snrpc.server.SnRpcImpl"/>
+ *	 </rpcService>
  * </rpcServices>
  * @author skyim E-mail:wxh64788665@gmail.com
  * 类说明
  */
 public class RpcService {
-	private Class<?> typeClass;
+
+	private Class<?> typeClass; //接口类型
 	private String id;
 	private String name;
 	private boolean overload = false;
-	private RpcImplementor rpcImplementor;
+	private RpcImplementor rpcImplementor; //具体实现类
 	
-	public RpcService(String id,String name){
+	public RpcService(String id, String name){
 		super();
 		this.id = id;
 		this.name = name;
@@ -62,6 +62,4 @@ public class RpcService {
 	public void setRpcImplementor(RpcImplementor rpcImplementor) {
 		this.rpcImplementor = rpcImplementor;
 	}
-	
-	
 }

@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
  * 类说明
  */
 public class ServiceProvider {
- 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceProvider.class);
+
     private SnRpcConfig snRpcConfig = SnRpcConfig.getInstance();
     // 用于等待 SyncConnected事件触发后继续执行当前线程
     private CountDownLatch latch = new CountDownLatch(1);
@@ -37,8 +37,7 @@ public class ServiceProvider {
  
     // 发布服务
     private String publishService(String host, int port) {
-        String url = null;
-        url = String.format("skyim:%s:%d", host, port);
+        String url = String.format("skyim:%s:%d", host, port);
         LOGGER.debug("publish service (url: {})", url);
         return url;
     }

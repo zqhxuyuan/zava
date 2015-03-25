@@ -1,4 +1,4 @@
-package com.jd.sponge;
+package com.github.netcomm.sponge;
 
 import java.util.HashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -13,9 +13,7 @@ public class SpongeThreadPoolExecutor
 	public final static String OneBatchWriteCnt = "oneBatchWriteCnt";
 	public final static String CanReleaseResMaxTime = "canReleaseResMaxTime";
 	
-    public SpongeThreadPoolExecutor()
-    {
-    	
+    public SpongeThreadPoolExecutor() {
     }
     
     /**

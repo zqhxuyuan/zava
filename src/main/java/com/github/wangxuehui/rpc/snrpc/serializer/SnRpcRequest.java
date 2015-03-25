@@ -7,22 +7,20 @@ import java.io.Serializable;
  * 类说明
  */
 public class SnRpcRequest implements Serializable{
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -4700088399107076960L;
+
 	private String requestID;
+
+    //请求消息包含了要调用的类名,方法名,参数值,参数类型
 	private String className;
 	private String methodName;
 	private String[] parameterTypes;
 	private Object[] parameters;
 	
 	public SnRpcRequest(){
-		
 	}
 
-	public SnRpcRequest(String className, String methodName,
-			String[] parameterTypes, Object[] parameters) {
+	public SnRpcRequest(String className, String methodName, String[] parameterTypes, Object[] parameters) {
 		super();
 		this.className = className;
 		this.methodName = methodName;
@@ -31,7 +29,7 @@ public class SnRpcRequest implements Serializable{
 	}
 
 	public SnRpcRequest(String requestID, String className, String methodName,
-			String[] parameterTypes, Object[] parameters) {
+                        String[] parameterTypes, Object[] parameters) {
 		super();
 		this.requestID = requestID;
 		this.className = className;
@@ -79,7 +77,4 @@ public class SnRpcRequest implements Serializable{
 	public void setParameters(Object[] parameters) {
 		this.parameters = parameters;
 	}
-	
-	
-	
 }

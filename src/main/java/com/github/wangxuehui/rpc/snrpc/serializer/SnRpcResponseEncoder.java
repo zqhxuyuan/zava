@@ -20,39 +20,36 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public class SnRpcResponseEncoder  extends MessageToByteEncoder<SnRpcResponse>{
 
 	@Override
-	protected void encode(ChannelHandlerContext ctx, SnRpcResponse msg,
-			ByteBuf out) throws Exception {
-		// TODO Auto-generated method stub
-           byte[] data =null;
-	       SnRpcConfig snRpcConfig = SnRpcConfig.getInstance();
-	       String type = snRpcConfig.getProperty("snrpc.serializataion.type", "5");
-	       if(Const.SERIALIZATION_PROTOBUF.equals(type)){
-	    	    final ProtobufSerializer protobuf = new ProtobufSerializer();
-	    	    data  =  protobuf.serialize(msg);
-	       }else if(Const.SERIALIZATION_KRYO.equals(type)){
-	    	    final KryoSerializer kryo = new KryoSerializer();
-	    	    data  =  kryo.serialize(msg);
-	       }else if(Const.SERIALIZATION_PROTOSTUFF.equals(type)){
-	   	    final ProtostuffSerializer protostuff = new ProtostuffSerializer();
-	   	    	data  =  protostuff.serialize(msg);
-	       }else if(Const.SERIALIZATION_FASTERXML.equals(type)){
-	     	    final FasterxmlSerializer fastxml = new FasterxmlSerializer();
-	     	   data  =  fastxml.serialize(msg);
-	       }else if(Const.SERIALIZATION_JACKSON.equals(type)){
-	    	    final JacksonSerializer jackson = new JacksonSerializer();
-	    	    data  =  jackson.serialize(msg);
-	       }else if(Const.SERIALIZATION_JDK.equals(type)){
-	   	        final JdkObjectSerializer jdk = new JdkObjectSerializer();
-	   	        data  =  jdk.serialize(msg);
-	       }else {
-	    	   	final ProtobufSerializer protobuf = new ProtobufSerializer();
-	    	   	data  =  protobuf.serialize(msg);
-	       }
-		   
-	       int dataLength = data.length;
-			// TODO Auto-generated method stub
-	       out.writeInt(dataLength);
-	       out.writeBytes(data);
+	protected void encode(ChannelHandlerContext ctx, SnRpcResponse msg, ByteBuf out) throws Exception {
+        byte[] data =null;
+        SnRpcConfig snRpcConfig = SnRpcConfig.getInstance();
+        String type = snRpcConfig.getProperty("snrpc.serializataion.type", "5");
+        if(Const.SERIALIZATION_PROTOBUF.equals(type)){
+            final ProtobufSerializer protobuf = new ProtobufSerializer();
+            data  =  protobuf.serialize(msg);
+        }else if(Const.SERIALIZATION_KRYO.equals(type)){
+            final KryoSerializer kryo = new KryoSerializer();
+            data  =  kryo.serialize(msg);
+        }else if(Const.SERIALIZATION_PROTOSTUFF.equals(type)){
+        final ProtostuffSerializer protostuff = new ProtostuffSerializer();
+            data  =  protostuff.serialize(msg);
+        }else if(Const.SERIALIZATION_FASTERXML.equals(type)){
+            final FasterxmlSerializer fastxml = new FasterxmlSerializer();
+           data  =  fastxml.serialize(msg);
+        }else if(Const.SERIALIZATION_JACKSON.equals(type)){
+            final JacksonSerializer jackson = new JacksonSerializer();
+            data  =  jackson.serialize(msg);
+        }else if(Const.SERIALIZATION_JDK.equals(type)){
+            final JdkObjectSerializer jdk = new JdkObjectSerializer();
+            data  =  jdk.serialize(msg);
+        }else {
+            final ProtobufSerializer protobuf = new ProtobufSerializer();
+            data  =  protobuf.serialize(msg);
+        }
+
+        int dataLength = data.length;
+        out.writeInt(dataLength);
+        out.writeBytes(data);
 	}
 
 }

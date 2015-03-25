@@ -15,9 +15,10 @@ public class ParseXmlToService {
 
 		public void parse(){
 			String configFile = SnRpcConfig.getInstance().getPropertiesFile();
-			ConfigureParse parse =new XmlConfigureParse(configFile);
+			ConfigureParse parse = new XmlConfigureParse(configFile);
+
 			List<RpcService> serviceList = parse.parseService();
-			for(RpcService service:serviceList){
+			for(RpcService service : serviceList){
 				SnNettyRpcServerHandler.putService(service);
 			}
 		}

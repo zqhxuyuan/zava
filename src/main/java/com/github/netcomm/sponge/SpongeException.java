@@ -1,4 +1,4 @@
-package com.jd.sponge;
+package com.github.netcomm.sponge;
 
 public class SpongeException extends Exception
 {
