@@ -7,7 +7,7 @@ import com.github.sefler1987.javaworker.worker.TaskProcessor;
 import com.github.sefler1987.javaworker.worker.WorkerTask;
 
 public class URLMatchingProcessor implements TaskProcessor {
-    private static final String URL_PATTERN = "http(s)?://[\\w\\.\\/]*(\\.htm|\\.do|\\.html|\\.xhtm|\\.xhtml)";
+    private static final String URL_PATTERN = "http(s)?://[\\w\\.\\/]*(\\.html|\\.htm|\\.do|\\.xhtm|\\.xhtml)";
 
     @Override
     public void process(WorkerTask<?> task) {

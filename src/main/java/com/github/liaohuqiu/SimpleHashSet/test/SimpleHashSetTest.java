@@ -1,4 +1,4 @@
-package com.github.liaohuqiu.SimpleHashSet;
+package com.github.liaohuqiu.SimpleHashSet.test;
 
 /*
  *  Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,6 +17,7 @@ package com.github.liaohuqiu.SimpleHashSet;
  *  limitations under the License.
  */
 
+import com.github.liaohuqiu.SimpleHashSet.SimpleHashSet;
 import junit.framework.TestCase;
 
 import java.util.Arrays;

@@ -135,6 +135,7 @@ public class Master {
             System.out.println(Constant.APP_DEBUG_TITLE + " Input splitting on " + fileToTreat);
             st = System.currentTimeMillis();
         }
+        //对输入数据进行分片
         List<String> filesToMap = inputSplitting(workersCores, fileToTreat);
         if (Constant.MODE_DEBUG) {
             totalTime = (double) ((System.currentTimeMillis() - st) / 1000.0) % 60;

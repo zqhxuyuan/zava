@@ -51,3 +51,7 @@ skyim:127.0.0.1:8081
 客户端连接到的ZooKeeper可以是集群中随机的一个zk节点.
 
 这里ZooKeeper只是用来保存了Netty服务端的连接信息(地址和端口). zk的一个典型的应用场景是作为配置中心ConfigCenter.
+
+## Others
+
+其他文档: http://my.oschina.net/huangyong/blog/361751

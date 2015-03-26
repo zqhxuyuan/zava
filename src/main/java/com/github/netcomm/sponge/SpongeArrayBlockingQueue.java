@@ -1,4 +1,5 @@
 package com.github.netcomm.sponge;
+
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
@@ -9,6 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.github.netcomm.sponge.util.DataByteArrayOutputStream;
@@ -22,32 +24,32 @@ import com.github.netcomm.sponge.util.Utilities;
  * element that has been on the queue the shortest time. New elements
  * are inserted at the tail of the queue, and the queue retrieval
  * operations obtain elements at the head of the queue.
- *
+ * <p>
  * <p>This is a classic &quot;bounded buffer&quot;, in which a
  * fixed-sized array holds elements inserted by producers and
  * extracted by consumers.  Once created, the capacity cannot be
  * increased.  Attempts to <tt>put</tt> an element into a full queue
  * will result in the operation blocking; attempts to <tt>take</tt> an
  * element from an empty queue will similarly block.
- *
+ * <p>
  * <p> This class supports an optional fairness policy for ordering
  * waiting producer and consumer threads.  By default, this ordering
  * is not guaranteed. However, a queue constructed with fairness set
  * to <tt>true</tt> grants threads access in FIFO order. Fairness
  * generally decreases throughput but reduces variability and avoids
  * starvation.
- *
+ * <p>
  * <p>This class and its iterator implement all of the
  * <em>optional</em> methods of the {@link Collection} and {@link
  * Iterator} interfaces.
- *
+ * <p>
  * <p>This class is a member of the
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
- * @since 1.5
- * @author Doug Lea
  * @param <E> the type of elements held in this collection
+ * @author Doug Lea
+ * @since 1.5
  */
 public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
@@ -60,13 +62,21 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      */
     private static final long serialVersionUID = -817911632652898426L;
 
-    /** The queued items  */
+    /**
+     * The queued items
+     */
     private final E[] items;
-    /** items index for next take, poll or remove */
+    /**
+     * items index for next take, poll or remove
+     */
     private int takeIndex;
-    /** items index for next put, offer, or add. */
+    /**
+     * items index for next put, offer, or add.
+     */
     private int putIndex;
-    /** Number of items in the queue */
+    /**
+     * Number of items in the queue
+     */
     private int count;
 
     /*
@@ -74,14 +84,22 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * found in any textbook.
      */
 
-    /** Main lock guarding all access */
+    /**
+     * Main lock guarding all access
+     */
     private final ReentrantLock lock;
-    /** Condition for waiting takes */
+    /**
+     * Condition for waiting takes
+     */
     private final Condition notEmpty;
-    /** Condition for waiting puts */
+    /**
+     * Condition for waiting puts
+     */
     private final Condition notFull;
 
-    /** 是否启动持久化模式 */
+    /**
+     * 是否启动持久化模式
+     */
     private boolean isInPersistence = false;
     private MemoryItemList theMemoryItemList;
 
@@ -91,7 +109,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * Circularly increment i.
      */
     final int inc(int i) {
-        return (++i == items.length)? 0 : i;
+        return (++i == items.length) ? 0 : i;
     }
 
     /**
@@ -131,7 +149,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
             takeIndex = inc(takeIndex);
         } else {
             // slide over all others up through putIndex.
-            for (;;) {
+            for (; ; ) {
                 int nexti = inc(i);
                 if (nexti != putIndex) {
                     items[i] = items[nexti];
@@ -151,29 +169,26 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * Creates an <tt>ArrayBlockingQueue</tt> with the given (fixed)
      * capacity and default access policy.
      *
-     * @param capacity the capacity of this queue
+     * @param capacity the capacity of this queue 队列的容量
      * @throws IllegalArgumentException if <tt>capacity</tt> is less than 1
      */
     public SpongeArrayBlockingQueue(int capacity, int oneBatchSzParm,
-            SpongeService theSpongeServiceParm) throws Exception
-    {
-        if (oneBatchSzParm >= capacity)
-        {
+                                    SpongeService theSpongeServiceParm) throws Exception {
+        if (oneBatchSzParm >= capacity) {
             throw new SpongeException("一次批量持久化大小不能大于队列容量");
         }
 
-        if (capacity <= 0)
-        {
+        if (capacity <= 0) {
             throw new IllegalArgumentException();
         }
 
-        this.items = (E[]) new Object[capacity];
+        this.items = (E[]) new Object[capacity]; //队列是用数组实现的,数组的容量
         lock = new ReentrantLock(false);
         notEmpty = lock.newCondition();
-        notFull =  lock.newCondition();
+        notFull = lock.newCondition();
 
-        theMemoryItemList = new MemoryItemList(oneBatchSzParm,
-                theSpongeServiceParm);
+        //内存的任务项
+        theMemoryItemList = new MemoryItemList(oneBatchSzParm, theSpongeServiceParm);
     }
 
     /**
@@ -181,23 +196,21 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * capacity and the specified access policy.
      *
      * @param capacity the capacity of this queue
-     * @param fair if <tt>true</tt> then queue accesses for threads blocked
-     *        on insertion or removal, are processed in FIFO order;
-     *        if <tt>false</tt> the access order is unspecified.
+     * @param fair     if <tt>true</tt> then queue accesses for threads blocked
+     *                 on insertion or removal, are processed in FIFO order;
+     *                 if <tt>false</tt> the access order is unspecified.
      * @throws IllegalArgumentException if <tt>capacity</tt> is less than 1
      */
     public SpongeArrayBlockingQueue(int capacity, boolean fair,
-            int oneBatchSzParm,
-            SpongeService theSpongeServiceParm) {
-        if (capacity <= 0)
-            throw new IllegalArgumentException();
+                                    int oneBatchSzParm,
+                                    SpongeService theSpongeServiceParm) {
+        if (capacity <= 0) throw new IllegalArgumentException();
         this.items = (E[]) new Object[capacity];
         lock = new ReentrantLock(fair);
         notEmpty = lock.newCondition();
-        notFull =  lock.newCondition();
+        notFull = lock.newCondition();
 
-        theMemoryItemList = new MemoryItemList(oneBatchSzParm,
-                theSpongeServiceParm);
+        theMemoryItemList = new MemoryItemList(oneBatchSzParm, theSpongeServiceParm);
     }
 
     /**
@@ -207,24 +220,24 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * added in traversal order of the collection's iterator.
      *
      * @param capacity the capacity of this queue
-     * @param fair if <tt>true</tt> then queue accesses for threads blocked
-     *        on insertion or removal, are processed in FIFO order;
-     *        if <tt>false</tt> the access order is unspecified.
-     * @param c the collection of elements to initially contain
+     * @param fair     if <tt>true</tt> then queue accesses for threads blocked
+     *                 on insertion or removal, are processed in FIFO order;
+     *                 if <tt>false</tt> the access order is unspecified.
+     * @param c        the collection of elements to initially contain
      * @throws IllegalArgumentException if <tt>capacity</tt> is less than
-     *         <tt>c.size()</tt>, or less than 1.
-     * @throws NullPointerException if the specified collection or any
-     *         of its elements are null
+     *                                  <tt>c.size()</tt>, or less than 1.
+     * @throws NullPointerException     if the specified collection or any
+     *                                  of its elements are null
      */
     public SpongeArrayBlockingQueue(int capacity, boolean fair,
-                              Collection<? extends E> c,
-                              int oneBatchSzParm,
-                              SpongeService theSpongeServiceParm) {
+                                    Collection<? extends E> c,
+                                    int oneBatchSzParm,
+                                    SpongeService theSpongeServiceParm) {
         this(capacity, fair, oneBatchSzParm, theSpongeServiceParm);
         if (capacity < c.size())
             throw new IllegalArgumentException();
 
-        for (Iterator<? extends E> it = c.iterator(); it.hasNext();)
+        for (Iterator<? extends E> it = c.iterator(); it.hasNext(); )
             add(it.next());
     }
 
@@ -237,10 +250,10 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * @param e the element to add
      * @return <tt>true</tt> (as specified by {@link Collection#add})
      * @throws IllegalStateException if this queue is full
-     * @throws NullPointerException if the specified element is null
+     * @throws NullPointerException  if the specified element is null
      */
     public boolean add(E e) {
-    return super.add(e);
+        return super.add(e);
     }
 
     /**
@@ -258,13 +271,11 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
         lock.lock();
         try {
             // 如满足下面条件,则进行持久化保存
-            if (count == items.length || isInPersistence == true)
-            {
+            if (count == items.length || isInPersistence == true) {
                 isInPersistence = true;
                 theMemoryItemList.addOneRequest(e);
                 return true;
-            }
-            else {
+            } else {
                 insert(e);
                 return true;
             }
@@ -308,14 +319,14 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException {@inheritDoc}
      */
     public boolean offer(E e, long timeout, TimeUnit unit)
-        throws InterruptedException {
+            throws InterruptedException {
 
         if (e == null) throw new NullPointerException();
-    long nanos = unit.toNanos(timeout);
+        long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            for (;;) {
+            for (; ; ) {
                 if (count != items.length) {
                     insert(e);
                     return true;
@@ -353,8 +364,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
         try {
             try {
                 // 如果当前内存中的任务数等于0，则从缓冲池里获取数据
-                if (count == 0)
-                {
+                if (count == 0) {
                     theMemoryItemList.fetchData();
                 }
 
@@ -372,11 +382,11 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
     }
 
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-    long nanos = unit.toNanos(timeout);
+        long nanos = unit.toNanos(timeout);
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            for (;;) {
+            for (; ; ) {
                 if (count != 0) {
                     E x = extract();
                     return x;
@@ -409,6 +419,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
 
     // this doc comment is overridden to remove the reference to collections
     // greater in size than Integer.MAX_VALUE
+
     /**
      * Returns the number of elements in this queue.
      *
@@ -426,12 +437,13 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
 
     // this doc comment is a modified copy of the inherited doc comment,
     // without the reference to unlimited queues.
+
     /**
      * Returns the number of additional elements that this queue can ideally
      * (in the absence of memory or resource constraints) accept without
      * blocking. This is always equal to the initial capacity of this queue
      * less the current <tt>size</tt> of this queue.
-     *
+     * <p>
      * <p>Note that you <em>cannot</em> always tell if an attempt to insert
      * an element will succeed by inspecting <tt>remainingCapacity</tt>
      * because it may be the case that another thread is about to
@@ -466,7 +478,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
         try {
             int i = takeIndex;
             int k = 0;
-            for (;;) {
+            for (; ; ) {
                 if (k++ >= count)
                     return false;
                 if (o.equals(items[i])) {
@@ -511,11 +523,11 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
     /**
      * Returns an array containing all of the elements in this queue, in
      * proper sequence.
-     *
+     * <p>
      * <p>The returned array will be "safe" in that no references to it are
      * maintained by this queue.  (In other words, this method must allocate
      * a new array).  The caller is thus free to modify the returned array.
-     *
+     * <p>
      * <p>This method acts as bridge between array-based and collection-based
      * APIs.
      *
@@ -545,21 +557,21 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      * the specified array.  If the queue fits in the specified array, it
      * is returned therein.  Otherwise, a new array is allocated with the
      * runtime type of the specified array and the size of this queue.
-     *
+     * <p>
      * <p>If this queue fits in the specified array with room to spare
      * (i.e., the array has more elements than this queue), the element in
      * the array immediately following the end of the queue is set to
      * <tt>null</tt>.
-     *
+     * <p>
      * <p>Like the {@link #toArray()} method, this method acts as bridge between
      * array-based and collection-based APIs.  Further, this method allows
      * precise control over the runtime type of the output array, and may,
      * under certain circumstances, be used to save allocation costs.
-     *
+     * <p>
      * <p>Suppose <tt>x</tt> is a queue known to contain only strings.
      * The following code can be used to dump the queue into a newly
      * allocated array of <tt>String</tt>:
-     *
+     * <p>
      * <pre>
      *     String[] y = x.toArray(new String[0]);</pre>
      *
@@ -570,9 +582,9 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
      *          be stored, if it is big enough; otherwise, a new array of the
      *          same runtime type is allocated for this purpose
      * @return an array containing all of the elements in this queue
-     * @throws ArrayStoreException if the runtime type of the specified array
-     *         is not a supertype of the runtime type of every element in
-     *         this queue
+     * @throws ArrayStoreException  if the runtime type of the specified array
+     *                              is not a supertype of the runtime type of every element in
+     *                              this queue
      * @throws NullPointerException if the specified array is null
      */
     public <T> T[] toArray(T[] a) {
@@ -581,15 +593,15 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
         lock.lock();
         try {
             if (a.length < count)
-                a = (T[])java.lang.reflect.Array.newInstance(
-                    a.getClass().getComponentType(),
-                    count
-                    );
+                a = (T[]) java.lang.reflect.Array.newInstance(
+                        a.getClass().getComponentType(),
+                        count
+                );
 
             int k = 0;
             int i = takeIndex;
             while (k < count) {
-                a[k++] = (T)items[i];
+                a[k++] = (T) items[i];
                 i = inc(i);
             }
             if (a.length > count)
@@ -690,7 +702,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
             int i = takeIndex;
             int n = 0;
             int sz = count;
-            int max = (maxElements < count)? maxElements : count;
+            int max = (maxElements < count) ? maxElements : count;
             while (n < max) {
                 c.add(items[i]);
                 items[i] = null;
@@ -825,184 +837,166 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
 
     /**
      * 启动初始化时调用，看是否有没被消费的持久化任务
+     *
      * @param theThreadPoolExecutorInsParm
      */
-    public void doFetchData_init(ThreadPoolExecutor theThreadPoolExecutorInsParm)
-    {
+    public void doFetchData_init(ThreadPoolExecutor theThreadPoolExecutorInsParm) {
         final ReentrantLock lock = this.lock;
         lock.lock();
-        try
-        {
+        try {
             theMemoryItemList.fetchData_init(theThreadPoolExecutorInsParm);
-        }
-        finally
-        {
+        } finally {
             lock.unlock();
         }
     }
 
-    class MemoryItemList
-    {
+    // 内存数据
+    class MemoryItemList {
+        //一次批处理的数量
         private int oneBatchSz = 100;
+        //用来保存阻塞队列满了之后的数据
         private Object[] itemArray;
+        //计数器用来判断是否超过批处理的数据量,超过时,开始写磁盘
         private int count = 0;
-        private DataByteArrayOutputStream theBytesOut =
-            new DataByteArrayOutputStream(1 * 1024 * 1024);
+        //服务类,用于获取相关持久层实现类,比如文件的实现方式
         private SpongeService theSpongeService;
+        //字节输出流,默认1MB
+        private DataByteArrayOutputStream theBytesOut = new DataByteArrayOutputStream(1 * 1024 * 1024);
 
-        protected MemoryItemList(int oneBatchSzParm,
-                SpongeService theSpongeServiceParm)
-        {
+        protected MemoryItemList(int oneBatchSzParm, SpongeService theSpongeServiceParm) {
             oneBatchSz = oneBatchSzParm;
             itemArray = new Object[oneBatchSz];
             theSpongeService = theSpongeServiceParm;
         }
 
-        protected boolean addOneRequest(Object requestParm)
-        {
+        //添加一个请求. 在往阻塞队列中添加元素满了之后,会调用该方法暂时保存在一个临时数组中
+        protected boolean addOneRequest(Object requestParm) {
             itemArray[count] = requestParm;
             count++;
-
-            if (count >= oneBatchSz)
-            {
+            //满足进行一次批处理的条件,则将内存中临时数组的数据写入到文件中
+            if (count >= oneBatchSz) {
                 generateOneBatchBytes();
             }
-
             return true;
         }
 
-        private void generateOneBatchBytes()
-        {
-            theBytesOut.reset();
-            theBytesOut.setSize(6);
-
-            try
-            {
-                for (int i = 0; i < count; i++)
-                {
+        private void generateOneBatchBytes() {
+            theBytesOut.reset(); //position=0
+            theBytesOut.setSize(6); //position的位置=6
+            //从第6个字节开始填充数据
+            try {
+                //把临时数组中的数据都写到输出流中
+                for (int i = 0; i < count; i++) {
                     byte[] tmpBytes = JSON.toJSONBytes(itemArray[i], SerializerFeature.WriteClassName);
+                    //先写长度
                     theBytesOut.write(Utilities.getBytesFromInt(tmpBytes.length));
+                    //再写数据
                     theBytesOut.write(tmpBytes);
                 }
 
                 byte[] tmpData = theBytesOut.getData();
+                //在最开始将position设置为6, 现在开始填充前面6个字节
                 // magic便签
                 tmpData[0] = 7;
                 tmpData[1] = 7;
+                //int有4个字节,加上前面的2个字节,刚好是6个字节.
                 Utilities.setBytesFromInt(theBytesOut.size(), tmpData, 2);
 
-                theSpongeService.getThePersistence().addOneBatchBytes(
-                        theBytesOut.getDataClone());
-            }
-            catch (Exception ex)
-            {
+                //调用持久层实现类,将一批数据追加到文件中.
+                //注意: theBytesOut跟具体持久化实现没有关系, 它本身是在内存中的二进制字节输出流.
+                theSpongeService.getThePersistence().addOneBatchBytes(theBytesOut.getDataClone());
+            } catch (Exception ex) {
                 ex.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 count = 0;
             }
         }
 
-        private void fetchData_init(ThreadPoolExecutor theThreadPoolExecutorInsParm)
-        {
-            if (theSpongeService.getThePersistence().isHaveDataInPersistence() == true)
-            {
-                try
-                {
+        //初始化时看看有没有需要消费的数据.
+        private void fetchData_init(ThreadPoolExecutor theThreadPoolExecutorInsParm) {
+            //有需要消费的数据
+            if (theSpongeService.getThePersistence().isHaveDataInPersistence() == true) {
+                try {
+                    //取一批数据
                     byte[] tmpBytes = theSpongeService.getThePersistence().fetchOneBatchBytes();
-
-                    if (tmpBytes != null)
-                    {
-                        //long tmpStartTime = System.currentTimeMillis();
+                    int tmpLoadCnt = 0;
+                    if (tmpBytes != null) {
+                        long tmpStartTime = System.currentTimeMillis();
                         int tmpCurPosi = 6;
-                        while (tmpCurPosi < tmpBytes.length)
-                        {
+                        while (tmpCurPosi < tmpBytes.length) {
                             int tmpOneItemLength = Utilities.getIntFromBytes(tmpBytes, tmpCurPosi);
                             tmpCurPosi += 4;
                             byte[] tmpOneItemBytes = new byte[tmpOneItemLength];
                             System.arraycopy(tmpBytes, tmpCurPosi, tmpOneItemBytes, 0, tmpOneItemLength);
-                            E tmpOneItem = (E)JSON.parse(tmpOneItemBytes);
-                            theThreadPoolExecutorInsParm.execute((Runnable)tmpOneItem);
+                            E tmpOneItem = (E) JSON.parse(tmpOneItemBytes);
+                            theThreadPoolExecutorInsParm.execute((Runnable) tmpOneItem);
                             tmpCurPosi += tmpOneItemLength;
+                            tmpLoadCnt ++;
                         }
-
+                        //只要内存或磁盘中有数据,说明在持久化的状态. 即队列的负荷已经超过capacity了.
                         isInPersistence = true;
-                        //System.out.println(tmpLoadCnt + "条, 装载耗时 "+(System.currentTimeMillis() - tmpStartTime));
+                        System.out.println(tmpLoadCnt + "条, 装载耗时 "+(System.currentTimeMillis() - tmpStartTime));
                     }
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
         }
 
-        private boolean fetchData()
-        {
+        //当队列为空时,看看内存或磁盘中有没有需要消费的数据
+        //在往队列中添加任务时,当队列满了后,添加到内存以及持久化到磁盘后
+        //如果这时要消费任务,首先还是从队列中取出任务进行执行, 只有当队列为空时,才去看看内存和磁盘中还有没有任务.
+        //这也复合了FIFO的队列. 因为任务首先进入队列中,所以消费的时候可能也是先从队列中消费.
+        private boolean fetchData() {
             boolean retBool = false;
-            try
-            {
-                if (isInPersistence == true)
-                {
+            try {
+                if (isInPersistence == true) {
                     byte[] tmpBytes = theSpongeService.getThePersistence().fetchOneBatchBytes();
-
-                    if (tmpBytes != null)
-                    {
+                    int tmpLoadCnt = 0;
+                    if (tmpBytes != null) {
                         long tmpStartTime = System.currentTimeMillis();
                         int tmpCurPosi = 6;
-                        while (tmpCurPosi < tmpBytes.length)
-                        {
+                        while (tmpCurPosi < tmpBytes.length) {
                             int tmpOneItemLength = Utilities.getIntFromBytes(tmpBytes, tmpCurPosi);
                             tmpCurPosi += 4;
                             byte[] tmpOneItemBytes = new byte[tmpOneItemLength];
                             System.arraycopy(tmpBytes, tmpCurPosi, tmpOneItemBytes, 0, tmpOneItemLength);
-                            E tmpOneItem = (E)JSON.parse(tmpOneItemBytes);
+                            E tmpOneItem = (E) JSON.parse(tmpOneItemBytes);
                             insert(tmpOneItem);
                             tmpCurPosi += tmpOneItemLength;
+                            tmpLoadCnt ++;
                         }
-
-                        //System.out.println(tmpLoadCnt + "条, 装载耗时 "+(System.currentTimeMillis() - tmpStartTime));
+                        System.out.println(tmpLoadCnt + "条, 装载耗时 "+(System.currentTimeMillis() - tmpStartTime));
                         retBool = true;
                     }
 
-                    if (tmpBytes == null)
-                    {
-                        if (count > 0)
-                        {
-                            for (int i = 0; i < count; i++)
-                            {
-                                insert((E)itemArray[i]);
+                    if (tmpBytes == null) {
+                        if (count > 0) {
+                            for (int i = 0; i < count; i++) {
+                                insert((E) itemArray[i]);
                             }
-
                             count = 0;
-
                             retBool = true;
                         }
                     }
 
-                    if (retBool == false)
-                    {
+                    if (retBool == false) {
                         System.out.println("没有持久化的任务需要处理了,队列模式切回到正常内存模式!!!");
                         isInPersistence = false;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
             return retBool;
         }
 
-        public int getOneBatchSz()
-        {
+        public int getOneBatchSz() {
             return oneBatchSz;
         }
 
-        public void setOneBatchSz(int oneBatchSz)
-        {
+        public void setOneBatchSz(int oneBatchSz) {
             this.oneBatchSz = oneBatchSz;
         }
     }

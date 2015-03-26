@@ -1,5 +1,7 @@
-package com.github.liaohuqiu.SimpleHashSet;
+package com.github.liaohuqiu.SimpleHashSet.test;
 
+import com.github.liaohuqiu.SimpleHashSet.CacheEntry;
+import com.github.liaohuqiu.SimpleHashSet.SimpleDiskLruCache;
 import junit.framework.TestCase;
 import org.junit.Ignore;
 
