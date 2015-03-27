@@ -880,17 +880,20 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
             return true;
         }
 
+        //生成一批数据
         private void generateOneBatchBytes() {
             theBytesOut.reset(); //position=0
             theBytesOut.setSize(6); //position的位置=6
             //从第6个字节开始填充数据
             try {
                 //把临时数组中的数据都写到输出流中
+                //写入数组中每个元素时,先写入这个元素占用的长度,然后才写入元素的值
                 for (int i = 0; i < count; i++) {
+                    //将数组对象转成字节数组.
                     byte[] tmpBytes = JSON.toJSONBytes(itemArray[i], SerializerFeature.WriteClassName);
-                    //先写长度
+                    //先写元素的长度
                     theBytesOut.write(Utilities.getBytesFromInt(tmpBytes.length));
-                    //再写数据
+                    //再写元素的字节数据
                     theBytesOut.write(tmpBytes);
                 }
 
@@ -900,6 +903,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
                 tmpData[0] = 7;
                 tmpData[1] = 7;
                 //int有4个字节,加上前面的2个字节,刚好是6个字节.
+                //第二个字节后,写入的是整个batch的大小. 而前面for循环里的长度则是数组中每个元素自己的长度.
                 Utilities.setBytesFromInt(theBytesOut.size(), tmpData, 2);
 
                 //调用持久层实现类,将一批数据追加到文件中.
@@ -922,14 +926,22 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
                     int tmpLoadCnt = 0;
                     if (tmpBytes != null) {
                         long tmpStartTime = System.currentTimeMillis();
+                        //前面6个字节是全局的
                         int tmpCurPosi = 6;
+                        //读取一整批数据,其中写入数组时的每一项条目,都会被取出来作为任务执行
                         while (tmpCurPosi < tmpBytes.length) {
+                            //写入的是数组,数组的每个元素首先写入长度,然后写入元素的值
                             int tmpOneItemLength = Utilities.getIntFromBytes(tmpBytes, tmpCurPosi);
                             tmpCurPosi += 4;
+                            //字节数组的长度,创建对应长度的字节数组来存放里面的值
                             byte[] tmpOneItemBytes = new byte[tmpOneItemLength];
+                            //数组中的每一项
                             System.arraycopy(tmpBytes, tmpCurPosi, tmpOneItemBytes, 0, tmpOneItemLength);
+                            //还原/反序列化成任务
                             E tmpOneItem = (E) JSON.parse(tmpOneItemBytes);
+                            //执行任务,我们取出任务的目的是为了执行它,就像从队列中取出任务也是执行任务
                             theThreadPoolExecutorInsParm.execute((Runnable) tmpOneItem);
+                            //右移偏移量,处理数组的下一个元素
                             tmpCurPosi += tmpOneItemLength;
                             tmpLoadCnt ++;
                         }
@@ -951,6 +963,8 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
             boolean retBool = false;
             try {
                 if (isInPersistence == true) {
+                    //-----下面的代码和fetchData_init一模一样,不过它判断的条件是isInPersistence
+                    //只有有持久化,才需要从持久化文件或者内存中读取.否则直接从队列中就可以读取
                     byte[] tmpBytes = theSpongeService.getThePersistence().fetchOneBatchBytes();
                     int tmpLoadCnt = 0;
                     if (tmpBytes != null) {
@@ -970,8 +984,10 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
                         retBool = true;
                     }
 
+                    //没有需要消费的数据
                     if (tmpBytes == null) {
                         if (count > 0) {
+                            //把内存中的数据放到队列中
                             for (int i = 0; i < count; i++) {
                                 insert((E) itemArray[i]);
                             }
@@ -980,6 +996,7 @@ public class SpongeArrayBlockingQueue<E> extends AbstractQueue<E>
                         }
                     }
 
+                    //如果内存中和持久化文件都没有需要消费的数据,说明内存和持久化文件中的任务都执行完毕了.
                     if (retBool == false) {
                         System.out.println("没有持久化的任务需要处理了,队列模式切回到正常内存模式!!!");
                         isInPersistence = false;

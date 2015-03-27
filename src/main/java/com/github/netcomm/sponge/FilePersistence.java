@@ -24,7 +24,7 @@ public class FilePersistence extends BasePersistence {
         theWriteDataFile = new RAcsFile(directory + DataFile_Name);
         theReadDataFile = new RAcsFile(directory + DataFile_Name, "r");
         theFetchPosiFile = new RAcsFile(directory + FetchPosiFile_Name);
-        //初始化当前获取的位置
+        //初始化当前已经消费过的的位置
         initCurFetchPosi();
         //写数据文件的时候,要接着数据文件中已有的内容往后写. --> 定位写
         theWriteDataFile.getDataFile().seek(theWriteDataFile.getFileLength());
@@ -33,6 +33,7 @@ public class FilePersistence extends BasePersistence {
 
     private void initCurFetchPosi() {
         try {
+            //theFetchPosiFile中保存的是一个long类型,表示在数据文件中已经消费过的位置
             if (theFetchPosiFile.getFileLength() == 8) {
                 curFetchPosi = theFetchPosiFile.getDataFile().readLong();
             }
@@ -50,30 +51,39 @@ public class FilePersistence extends BasePersistence {
         }
     }
 
+    /**
+     * 获取数据时比写数据要麻烦,要维护消费的位置.
+     * @return
+     * @throws Exception
+     */
     @Override
     public byte[] doFetchOneBatchBytes() throws Exception {
         byte[] tmpLengthByte = new byte[6];
         int tmpReadCnt = theReadDataFile.getDataFile().read(tmpLengthByte);
         if (tmpReadCnt == -1) return null;
 
+        //第二个字节后写入的是一批数据的大小(包括了magic head部分的6个字节).
         int tmpByteLength = Utilities.getIntFromBytes(tmpLengthByte, 2);
         byte[] tmpReadBytes = new byte[tmpByteLength];
 
+        //第六个字节后写入的是数组的每个元素的字节数组. ReadCnt表示读取的数组元素的数量
+        //起始现在就可以把tmpReadBytes返回了. 但是为什么还要处理FetchPositionFile?
         tmpReadCnt = theReadDataFile.getDataFile().read(tmpReadBytes, 6, tmpByteLength - 6);
-        if (tmpReadCnt == -1) {
-            return null;
-        } else {
-            curFetchPosi += tmpByteLength;
-            byte[] tmpBytes = Utilities.getBytesFromLong(curFetchPosi);
-            theFetchPosiFile.getDataFile().seek(0);
-            theFetchPosiFile.getDataFile().write(tmpBytes);
-            theFetchPosiFile.getDataFile().getFD().sync();
-            return tmpReadBytes;
-        }
+        if (tmpReadCnt == -1) return null;
+
+        //读完一批数据之后, 将数据文件的消费位置右移到这批数据的末尾-->写到索引文件中!
+        curFetchPosi += tmpByteLength;
+        //将long类型的curFetchPosi转换为字节数组形式,覆写到索引文件中
+        byte[] tmpBytes = Utilities.getBytesFromLong(curFetchPosi);
+        //注意:每次fetch一批数据的时候,都是从0开始写一个long类型的数值,所以是覆盖!
+        theFetchPosiFile.getDataFile().seek(0);
+        theFetchPosiFile.getDataFile().write(tmpBytes);
+        theFetchPosiFile.getDataFile().getFD().sync();
+        return tmpReadBytes;
     }
 
     /**
-     *
+     * 持久化文件时,只需要将字节数组保存到数据文件中即可.
      * @param writeBytesParm 要写入的数据
      * @param offsetParm 起始位置
      * @param lengthParm 写入多少长度的数据
@@ -82,14 +92,9 @@ public class FilePersistence extends BasePersistence {
     @Override
     public void doWriteOneBatchBytes(byte[] writeBytesParm, int offsetParm, int lengthParm) throws Exception {
         long tmpStartTime = System.currentTimeMillis();
-
         RandomAccessFile file = theWriteDataFile.getDataFile();
         file.write(writeBytesParm, offsetParm, lengthParm);
-
-        if (forceToDisk) {
-            file.getFD().sync();
-        }
-
+        if (forceToDisk) file.getFD().sync();
         System.out.println("一次写入耗时 " + (System.currentTimeMillis() - tmpStartTime));
     }
 
@@ -104,6 +109,11 @@ public class FilePersistence extends BasePersistence {
         doWriteOneBatchBytes(writeBytesParm, 0, writeBytesParm.length);
     }
 
+    /**
+     * 释放资源. 资源是什么? 资源就是超过队列阈值后保存在持久化文件里的任务.
+     * 释放资源即要删除持久化文件.
+     * @throws Exception
+     */
     @Override
     public void canReleaseRes() throws Exception {
         if (curFetchPosi != 0) {

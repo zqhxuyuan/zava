@@ -147,16 +147,19 @@ public abstract class BasePersistence implements PersistenceIntf {
         try {
             //注意到读和写都是共用一个锁: WriteAndReadMutex. 因此读和写都是互斥的!
             synchronized (WriteAndReadMutex) {
-                //读取一批数据
+                //1. 读取一批数据
                 retBytes = doFetchOneBatchBytes();
 
+                //没有需要消费的数据,才需要释放资源. 开始计时!...
+                //如果retBytes==null,下面的2个if判断都不会执行.
                 if (retBytes == null) {
                     isCanReleaseResTime = System.currentTimeMillis();
                 } else {
+                    //有需要消费的数据,不能释放资源!
                     isCanReleaseResTime = -1;
                 }
 
-                //没有读到数据,但是内存中有数据,则把内存中的返回. 这种情景是: 队列中的数据超过capacity,但是没有发生写入磁盘的操作
+                //2. 没有读到数据,但是内存中有数据,则把内存中的返回. 这种情景是: 队列中的数据超过capacity,但是没有发生写入磁盘的操作
                 if (retBytes == null) {
                     if (theOutBytes.size() > 0) {
                         int tmpByteLength = Utilities.getIntFromBytes(theOutBytes.getData(), writeOffset + 2);
@@ -169,6 +172,8 @@ public abstract class BasePersistence implements PersistenceIntf {
                     }
                 }
 
+                //3.当添加数据的时候,会首先加到inMemoryDataList中. 然后在一定条件下后台线程才会从inMemoryDataList中移除,写到theOutBytes中
+                //所以在检查完theOutBytes后,还要再回过头来检查这个时间段内有没有往inMemoryDataList中添加. 有的话也返回.
                 if (retBytes == null) {
                     synchronized (ListMutex) {
                         if (inMemoryDataList.size() > 0) {

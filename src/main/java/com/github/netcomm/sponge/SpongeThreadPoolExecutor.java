@@ -47,6 +47,7 @@ public class SpongeThreadPoolExecutor {
         int tmpOneBatchWriteCnt = 20;
         int tmpCanReleaseResMaxTime = 60 * 1000;
 
+        //这是我们这个类最终要得到的对象. 这里给这个类添加了多个自定义参数. 用来满足我们的队列缓冲功能.
         ThreadPoolExecutor tmpThreadPool = null;
         try {
             if (parmHMap != null) {
@@ -87,14 +88,14 @@ public class SpongeThreadPoolExecutor {
             FilePersistence tmpFilePersistence = new FilePersistence(tmpMaxByteArray_Sz,
                     tmpOneBatchWriteCnt, tmpCanReleaseResMaxTime, tmpDirectory);
 
-            //SpongeService可以基于不同的实现类,比如文件,数据库,内存redis等.
+            //SpongeService可以基于不同的实现类,比如文件,数据库,内存redis等. --> 服务基于策略
             SpongeService tmpSpongeService = new SpongeService(tmpFilePersistence);
 
-            //数组阻塞队列的自定义带缓冲实现
+            //数组阻塞队列的自定义带缓冲实现 --> 服务会服务于队列
             SpongeArrayBlockingQueue tmpMyArrayBlockingQueue =
                     new SpongeArrayBlockingQueue(tmpCapacity, tmpOnePersistLimit, tmpSpongeService);
 
-            //线程池的创建
+            //线程池的创建 --> 指定队列里的任务要从线程池中取出线程来执行任务
             tmpThreadPool = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, timeUnit, tmpMyArrayBlockingQueue);
 
             //初始化看看有没有需要消费的数据/任务.
