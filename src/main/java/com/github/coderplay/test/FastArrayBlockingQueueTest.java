@@ -1,4 +1,8 @@
-package com.github.coderplay.util.concurrent.queue;
+package com.github.coderplay.test;
+
+import com.github.coderplay.util.concurrent.queue.FastArrayBlockingQueue;
+import com.github.coderplay.util.concurrent.queue.SingleThreadedClaimStrategy;
+import com.github.coderplay.util.concurrent.queue.SingleThreadedWaitStrategy;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -13,12 +17,11 @@ public class FastArrayBlockingQueueTest {
 
         long start = System.currentTimeMillis();
         //创建一个阻塞队列
-        final BlockingQueue<Long> queue =
-                new FastArrayBlockingQueue<Long>(
-                        // producer strategy
-                        new SingleThreadedClaimStrategy(BUFFER_SIZE),
-                        // consumer strategy
-                        new SingleThreadedWaitStrategy());
+        final BlockingQueue<Long> queue = new FastArrayBlockingQueue<Long>(
+            // producer strategy 生产者策略: 单线程索取策略
+            new SingleThreadedClaimStrategy(BUFFER_SIZE),
+            // consumer strategy 消费者策略: 单线程等待策略
+            new SingleThreadedWaitStrategy());
 
         //消费者
         Runnable consumer = new Runnable() {

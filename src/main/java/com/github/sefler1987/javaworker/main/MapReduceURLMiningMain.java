@@ -42,6 +42,7 @@ public class MapReduceURLMiningMain implements WorkerListener {
         ConfigurableWorker mapWorker_2 = new ConfigurableWorker("W_M2");
         ConfigurableWorker mapWorker_3 = new ConfigurableWorker("W_M3");
         ConfigurableWorker mapWorker_4 = new ConfigurableWorker("W_M4");
+        //map操作:只访问目标URL,并获取内容
         mapWorker_1.setTaskProcessor(new PageContentFetchProcessor());
         mapWorker_2.setTaskProcessor(new PageContentFetchProcessor());
         mapWorker_3.setTaskProcessor(new PageContentFetchProcessor());
@@ -54,6 +55,7 @@ public class MapReduceURLMiningMain implements WorkerListener {
 
         // one reducers
         ConfigurableWorker reduceWorker_1 = new ConfigurableWorker("W_R1");
+        //reduce操作:找出map的页面内容中的链接
         reduceWorker_1.setTaskProcessor(new URLMatchingProcessor());
 
         // bind reducer to final result class
@@ -68,6 +70,7 @@ public class MapReduceURLMiningMain implements WorkerListener {
 
         // bind mapper to reduer
         Map2ReduceConnector connector = new Map2ReduceConnector(Arrays.asList(reduceWorker_1));
+        //给每个map worker都添加监听器
         mapWorker_1.addListener(connector);
         mapWorker_2.addListener(connector);
         mapWorker_3.addListener(connector);

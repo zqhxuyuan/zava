@@ -73,7 +73,7 @@ public class SimpleHashSetTest extends TestCase {
         for (int counter = 0; counter < objArray.length; counter++)
             assertTrue("SimpleHashSet does not contain correct elements", hs
                     .contains(objArray[counter]));
-        assertTrue("SimpleHashSet created from collection incorrect size",
+            assertTrue("SimpleHashSet created from collection incorrect size",
                 hs2.size() == objArray.length);
         try {
             new SimpleHashSet(null);

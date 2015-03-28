@@ -34,6 +34,7 @@ public class PageURLMiningProcessor implements TaskProcessor {
         PageURLMiningTask urlMiningTask = (PageURLMiningTask) task;
 
         try {
+            //先访问任务提供的目标URL
             URL url = new URL(urlMiningTask.getTargetURL());
 
             URLConnection urlConnection = url.openConnection();
@@ -43,8 +44,8 @@ public class PageURLMiningProcessor implements TaskProcessor {
             InputStream inputStream = urlConnection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), BUFFER_SIZE);
 
+            //目标URL的页面内容
             StringBuilder pageContent = new StringBuilder();
-
             String line = null;
             while ((line = reader.readLine()) != null) {
                 pageContent.append(line);
@@ -54,15 +55,17 @@ public class PageURLMiningProcessor implements TaskProcessor {
                 }
             }
 
+            //这个目标页面上有没有链接
             Matcher matcher = Pattern.compile(URL_PATTERN).matcher(pageContent);
             while (matcher.find()) {
+                //添加到这个任务需要挖掘的URL集合中
                 urlMiningTask.addMinedURL(matcher.group());
             }
 
+            //这个目标页面访问完毕,任务结束. 那么那些需要挖掘的页面呢?
             urlMiningTask.setDone(true);
         } catch (Exception e) {
-            System.err.println("Error while fetching specified URL: " + urlMiningTask.getTargetURL() + "\nException"
-                    + e.toString());
+            //System.err.println("Error while fetching specified URL: " + urlMiningTask.getTargetURL() + "\nException" + e.toString());
         } finally {
             synchronized (urlMiningTask) {
                 urlMiningTask.notifyAll();

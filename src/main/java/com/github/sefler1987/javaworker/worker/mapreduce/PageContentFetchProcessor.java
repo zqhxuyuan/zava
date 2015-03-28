@@ -46,8 +46,7 @@ public class PageContentFetchProcessor implements TaskProcessor {
             mapReduceURLMiningTask.setPageContent(pageContent.toString());
             mapReduceURLMiningTask.setDone(true);
         } catch (Exception e) {
-            System.err.println("Error while fetching specified URL: " + mapReduceURLMiningTask.getTargetURL()
-                    + "\nException" + e.toString());
+            //System.err.println("Error while fetching specified URL: " + mapReduceURLMiningTask.getTargetURL() + "\nException" + e.toString());
         } finally {
             synchronized (mapReduceURLMiningTask) {
                 mapReduceURLMiningTask.notifyAll();

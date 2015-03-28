@@ -19,7 +19,9 @@ package com.github.coderplay.util.concurrent.queue;
 
 /**
  * Strategy contract for claiming the sequence of events in the
- * {@link Sequencer} by event publishers.
+ * {@link Sequence} by event publishers.
+ *
+ * 索取策略: 索取什么? 索取序列号. 通过事件的发布者联系Sequence,索取序列事件
  * 
  * @author Min Zhou (coderplay@gmail.com)
  */

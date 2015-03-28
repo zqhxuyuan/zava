@@ -2,11 +2,14 @@ package com.github.sefler1987.javaworker.worker;
 
 import java.util.concurrent.Future;
 
+/**
+ * 工人的一个任务. 只要为PageURLMiningTask指定一个URL, 剩余的挖掘工作都交给工人去完成. 不管他挖了多深
+ * @param <T>
+ */
 public abstract class WorkerTask<T> implements Future<T> {
+
     protected String taskID;
-
     protected boolean done = false;
-
     protected int priority;
 
     public WorkerTask(int priority) {

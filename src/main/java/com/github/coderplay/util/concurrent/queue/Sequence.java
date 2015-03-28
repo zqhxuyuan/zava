@@ -20,7 +20,7 @@ package com.github.coderplay.util.concurrent.queue;
 import sun.misc.Unsafe;
 
 /**
- * 
+ * 序列生成器
  */
 public class Sequence {
   private static final Unsafe unsafe;
