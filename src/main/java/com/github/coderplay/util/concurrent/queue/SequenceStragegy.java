@@ -28,7 +28,9 @@ public interface SequenceStragegy {
   /**
    * Claim the next sequence. The caller should be held up until the claimed
    * sequence is available by tracking the gating {@link Sequence}.
-   * 
+   *
+   * 索取下一个序列号. 调用者应该被阻塞住,直到要索取的那个序列号是可用的.
+   * 怎么跟踪? 通过跟踪守卫的Sequence. 即lowerCursor.
    * @param lowerCursor
    * @return
    */
@@ -56,8 +58,7 @@ public interface SequenceStragegy {
       final TimeUnit sourceUnit) throws InterruptedException;
 
   /**
-   * Serialize publishers in sequence and set cursor to latest available
-   * sequence.
+   * Serialize publishers in sequence and set cursor to latest available sequence.
    */
   void publish(final long sequence, final Sequence cursor);
 

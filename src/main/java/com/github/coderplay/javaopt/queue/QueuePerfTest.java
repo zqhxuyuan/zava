@@ -21,6 +21,7 @@ public class QueuePerfTest {
   public static final int QUEUE_CAPACITY = 1 << 15;
   public static final int ITERATION = 50000000;
 
+  //生产者,往队列里加数据
   public static class Producer implements Runnable {
     private final Queue<Integer> queue;
 
@@ -41,12 +42,15 @@ public class QueuePerfTest {
 
   public static void main(final String[] args) throws Exception {
     System.out.println("capacity:" + QUEUE_CAPACITY + " iteration:" + ITERATION);
-    int op = Integer.parseInt(args[0]);
-    final Queue<Integer> queue = createQueue(op);
+    for(int j=0;j<7;j++){
+        //int op = Integer.parseInt(args[0]);
+        int op = j;
+        final Queue<Integer> queue = createQueue(op);
 
-    for (int i = 0; i < 20; i++) {
-      System.gc();
-      performanceRun(i,queue, op);
+        for (int i = 0; i < 20; i++) {
+            System.gc();
+            performanceRun(i,queue, op);
+        }
     }
   }
 
@@ -71,14 +75,20 @@ public class QueuePerfTest {
     }
   }
 
-  private static void performanceRun(final int runNumber,
-      final Queue<Integer> queue, int op) throws Exception {
+    /**
+     *
+     * @param runNumber 第几次运行
+     * @param queue 队列
+     * @param op 第几种队列
+     * @throws Exception
+     */
+  private static void performanceRun(final int runNumber, final Queue<Integer> queue, int op) throws Exception {
     final long start = System.nanoTime();
 
     final Thread thread = new Thread(new Producer(queue));
     thread.start();
 
-    
+    //队列消费
     Integer e;
     long result = 0;
     int i = ITERATION;

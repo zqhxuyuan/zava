@@ -19,6 +19,6 @@ public class IncrementLongWithVolatile {
 		long start = System.nanoTime();
 		increment();
 		System.out.println("Cost time: " + (System.nanoTime() - start));
-
+        //3,154,953,320
 	}
 }

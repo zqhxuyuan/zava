@@ -8,8 +8,10 @@ import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by zqhxuyuan on 15-3-18.
+ *
+ * 参考了Disruptor实现的队列
  */
-public class FastArrayBlockingQueueTest {
+public class FABQSingleThreadTest {
 
     public static void main(String[] args) {
         final int BUFFER_SIZE = 1024 * 8;

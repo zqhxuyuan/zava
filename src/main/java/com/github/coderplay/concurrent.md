@@ -13,39 +13,9 @@ An attempt to implements j.u.c whereby other alogrithms
     mvn clean package
 
 ## Examples
-### FastArrayBlockingQueue
-```java
-    final int BUFFER_SIZE = 1024 * 8;
-    final long ITERATIONS = 1000L * 1000L * 10L;
-    final BlockingQueue<Long> queue =
-        new FastArrayBlockingQueue<Long>(
-            // producer strategy 
-            new SingleThreadedClaimStrategy(BUFFER_SIZE),
-            // consumer strategy
-            new SingleThreadedWaitStrategy()); 
-    Runnable consumer = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (long l = 0; l < ITERATIONS; l++)
-            queue.take().longValue();
-        } catch (InterruptedException ie) {
-        }
-      }
-    };
 
-    Runnable producer = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          for (long l = 0; l < ITERATIONS; l++)
-            queue.put(Long.valueOf(l));
-        } catch (InterruptedException ie) {
-        }
-      }
-    };
+单线程的策略: FastArrayBlockingQueue
 
-    new Thread(consumer).start();
-    new Thread(producer).start();
-```
+
+
 

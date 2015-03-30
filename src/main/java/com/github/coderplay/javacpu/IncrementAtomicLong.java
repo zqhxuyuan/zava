@@ -20,6 +20,7 @@ public class IncrementAtomicLong {
       value.getAndIncrement();
     }
 
+    //3,147,057,742ns
     System.out.println("Cost time: " + (System.nanoTime() - start));
 
   }

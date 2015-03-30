@@ -1,7 +1,7 @@
 package com.github.coderplay.javacpu;
 
 public final class FalseSharing implements Runnable {
-	public static int NUM_THREADS = 4; // change
+	public static int NUM_THREADS = 4; // change 如果你的机器是4核,则运行该任务CPU会100%
 	public final static long ITERATIONS = 500L * 1000L * 1000L;
 	private final int arrayIndex;
 	private static VolatileLong[] longs;
@@ -16,13 +16,20 @@ public final class FalseSharing implements Runnable {
 		if (args.length == 1) {
 			NUM_THREADS = Integer.parseInt(args[0]);
 		}
+
+        //初始化数组, 其中VolatileLong的value初始是0
 		longs = new VolatileLong[NUM_THREADS];
 		for (int i = 0; i < longs.length; i++) {
 			longs[i] = new VolatileLong();
 		}
+
 		final long start = System.nanoTime();
 		runTest();
 		System.out.println("duration = " + (System.nanoTime() - start));
+
+        for(VolatileLong v : longs){
+            System.out.println(v.value); //1
+        }
 	}
 
 	private static void runTest() throws InterruptedException {
@@ -41,6 +48,7 @@ public final class FalseSharing implements Runnable {
 		}
 	}
 
+    @Override
 	public void run() {
 		long i = ITERATIONS + 1;
 		while (0 != --i) {

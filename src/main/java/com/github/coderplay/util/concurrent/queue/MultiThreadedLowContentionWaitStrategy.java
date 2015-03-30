@@ -21,7 +21,7 @@ package com.github.coderplay.util.concurrent.queue;
  * @author Min Zhou (coderplay@gmail.com)
  */
 public class MultiThreadedLowContentionWaitStrategy extends
-    AbstractMutlithreadWaitStrategy {
+        AbstractMutlithreadedWaitStrategy {
 
   @Override
   public void publish(long sequence, Sequence lowerCursor) {

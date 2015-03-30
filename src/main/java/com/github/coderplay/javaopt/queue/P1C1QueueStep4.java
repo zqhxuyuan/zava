@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * <ul>
  * <li>Lock free, observing single writer principal.
- * <li>Replacing the long fields with AtomicLong and using lazySet instead of
- * volatile assignment.
+ * <li>Replacing the long fields with AtomicLong and using lazySet instead of volatile assignment.
  * <li>Using the power of 2 mask, forcing the capacity to next power of 2.
  * <li>Adding head and tail cache fields. Avoiding redundant volatile reads.
  * <li>Padding head/tail AtomicLong fields. Avoiding false sharing.
@@ -31,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ul>
  */
 public final class P1C1QueueStep4<E> implements Queue<E> {
+
+    //把之前使用buffer.length的都用capacity代替
 	private final int capacity;
 	private final int mask;
 	private final E[] buffer;
@@ -71,6 +72,7 @@ public final class P1C1QueueStep4<E> implements Queue<E> {
 
 		final long currentTail = tail.get();
 		final long wrapPoint = currentTail - capacity;
+        //--CACHE
 		if (headCache.value <= wrapPoint) {
 			headCache.value = head.get();
 			if (headCache.value <= wrapPoint) {
@@ -86,6 +88,7 @@ public final class P1C1QueueStep4<E> implements Queue<E> {
 
 	public E poll() {
 		final long currentHead = head.get();
+        //--CACHE
 		if (currentHead >= tailCache.value) {
 			tailCache.value = tail.get();
 			if (currentHead >= tailCache.value) {

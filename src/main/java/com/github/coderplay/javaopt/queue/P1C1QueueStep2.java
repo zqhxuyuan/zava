@@ -21,13 +21,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * <ul>
  * <li>Lock free, observing single writer principal.
- * <li>Replacing the long fields with AtomicLong and using lazySet instead of
- * volatile assignment.
+ * <li>Replacing the long fields with AtomicLong and using lazySet instead of volatile assignment.
  * </ul>
  */
 public final class P1C1QueueStep2<E> implements Queue<E> {
 	private final E[] buffer;
 
+    //使用原子变量
 	private final AtomicLong tail = new AtomicLong(0);
 	private final AtomicLong head = new AtomicLong(0);
 
@@ -50,13 +50,15 @@ public final class P1C1QueueStep2<E> implements Queue<E> {
 			throw new NullPointerException("Null is not a valid element");
 		}
 
+        //获取尾指针的位置,不再简单地用currentTail = tail了. 现在是原子变量,通过get方法获得
 		final long currentTail = tail.get();
 		final long wrapPoint = currentTail - buffer.length;
 		if (head.get() <= wrapPoint) {
 			return false;
 		}
 
-    buffer[(int) (currentTail % buffer.length)] = e;
+        buffer[(int) (currentTail % buffer.length)] = e;
+        //同样给tail加1,也是通过set方法
 		tail.lazySet(currentTail + 1);
 
 		return true;
@@ -68,7 +70,7 @@ public final class P1C1QueueStep2<E> implements Queue<E> {
 			return null;
 		}
 
-    final int index = (int) (currentHead % buffer.length);
+        final int index = (int) (currentHead % buffer.length);
 		final E e = buffer[index];
 		buffer[index] = null;
 		head.lazySet(currentHead + 1);
@@ -112,7 +114,7 @@ public final class P1C1QueueStep2<E> implements Queue<E> {
 		}
 
 		for (long i = head.get(), limit = tail.get(); i < limit; i++) {
-      final E e = buffer[(int) (i % buffer.length)];
+            final E e = buffer[(int) (i % buffer.length)];
 			if (o.equals(e)) {
 				return true;
 			}

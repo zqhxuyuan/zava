@@ -21,12 +21,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * <ul>
  * <li>Lock free, observing single writer principal.
- * <li>Replacing the long fields with AtomicLong and using lazySet instead of
- * volatile assignment.
+ * <li>Replacing the long fields with AtomicLong and using lazySet instead of volatile assignment.
  * <li>Using the power of 2 mask, forcing the capacity to next power of 2.
  * </ul>
  */
 public final class P1C1QueueStep3<E> implements Queue<E> {
+
+    //多了个mask变量
 	private final int mask;
 	private final E[] buffer;
 

@@ -12,7 +12,49 @@ import static org.junit.Assert.assertNull;
 public class TestCol {
 
     public static void main(String[] args) {
-        testLinkedList();
+        //testLinkedList();
+
+        testRange();
+    }
+
+    public static void testRange(){
+        //Byte,1个字节,8位=1000 0000=128
+        System.out.println("Byte:");
+        System.out.println(Byte.MAX_VALUE); //127: 0-127一共128
+        System.out.println(Byte.MIN_VALUE); //-128
+        System.out.println(1 << 7); //128
+        System.out.println((1 << 7 ) - 1);  //127
+
+        System.out.println("Short:");
+        //short,2个字节,16位=1000 0000 0000 0000
+        System.out.println(Short.MAX_VALUE);
+        System.out.println((1 << 15) - 1);
+
+        System.out.println("Int:");
+        //int,4个字节,32位
+        System.out.println(Integer.MAX_VALUE); //2147483647 = 1
+        System.out.println(Integer.MIN_VALUE); //-2147483648
+        System.out.println(1 << 31);
+        System.out.println((1 << 31)-1); //2147483647
+
+        //MAX_VALUE=(1<<(bit-1))-1
+        //MIN_VALUE=-(1<<(bit-1))
+        String[] type = new String[]{"BYTE","SHORT","INT"};
+        int[] bits = new int[]{8,16,32};
+        for(int i=0;i<type.length;i++){
+            String t = type[i];
+            int b = bits[i];
+            int maxValue = (1 << (b-1)) - 1;
+            int minValue = -(1 << (b-1));
+
+            if("BYTE".equals(t)){
+                System.out.println("Byte:"+(Byte.MAX_VALUE == maxValue) + (Byte.MIN_VALUE == minValue));
+            }else if ("SHORT".equals(t)){
+                System.out.println("Short:" + (Short.MAX_VALUE == maxValue) + (Short.MIN_VALUE == minValue));
+            }else if ("INT".equals(t)){
+                System.out.println("Int:" + (Integer.MAX_VALUE == maxValue) + (Integer.MIN_VALUE == minValue));
+            }
+        }
     }
 
     public static void testPutMap(){
