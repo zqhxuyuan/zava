@@ -216,6 +216,9 @@ public class FastArrayBlockingQueue<E> extends AbstractQueue<E> implements
     @Override
     public int size() {
         // Technically the returned size of this queue
+        //队列的大小 = 生产者的序列号 - 消费者的序列号
+        //注意:消费者的序列号不能大于生产者的序列号. 这里用序列号, 不能用index.
+        //因为生产者的index可能小于消费者的index. 比如生产者的seq=12,index=2, 消费者的seq=3,index=3. 队列大小=12-3
         long consumed = lowerCursor.get();
         long produced = upperCursor.get();
         return (int) (produced - consumed);
