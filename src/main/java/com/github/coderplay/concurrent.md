@@ -13,8 +13,19 @@ An attempt to implements j.u.c whereby other alogrithms
     mvn clean package
 
 ## Examples
+FastArrayBlockingQueue
 
-单线程的策略: FastArrayBlockingQueue
+## SingleThread and MultiThread
+单线程的策略:
+  SingleThreadedClaimStrategy
+  SingleThreadedWaitStrategy
+
+多线程的策略:
+  MultiThreadedClaimStrategy
+  MultiThreadedWaitStrategy
+
+  MultiThreadedLowContentionClaimStrategy
+  MultiThreadedLowContentionWaitStrategy
 
 
 
