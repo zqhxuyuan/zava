@@ -12,49 +12,50 @@ Reading Status: √: Yes. ×:NonYet
 
 ## KV Store
 
-√ believe3301/nonheapdb
+√ @believe3301/nonheapdb
 
-√ darlinglete/bitcask
+√ @darlinglete/bitcask
 
-√ hoffart/dmap
+√ @hoffart/dmap
 
-√ seanlinwang/tkv
+√ @seanlinwang/tkv
 
 ## RPC
 
-√ Allogy/simplemq
+√ @Allogy/simplemq
 
-√ vintagewang/simplerpc
+√ @vintagewang/simplerpc
 
-√ wangxuehui/rpc
+√ @wangxuehui/rpc
 
-√ yuriyao/FLRMI
+√ @yuriyao/FLRMI
 
 ## MQ
 
-√ techrobby/SimplePubSub
+√ @techrobby/SimplePubSub
 
 ## Actor
 
-√ atemerev/hollywood
+√ @atemerev/hollywood
 
+× @shansun/sparrow
 
 ## DesignPatterns
 
-× code4craft/helloword
+× @code4craft/helloword
 
-× zhanglubing/designpattern
+× @zhanglubing/designpattern
 
 
 ## DataStructure | Concurrent
 
-√ coderplay
+√ @coderplay
 
-√ netcomm/sponge
+√ @netcomm/sponge
 
 
 ## MapRecue
 
-√ sefler1987/javaworker
+√ @sefler1987/javaworker
 
-√ stakafum/mapreduce
+√ @stakafum/mapreduce
