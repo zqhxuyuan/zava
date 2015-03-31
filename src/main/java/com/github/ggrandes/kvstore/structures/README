@@ -1,0 +1,50 @@
+
+## Stack --> IntStack
+数组+栈顶指针. 栈顶指针表示的是数组的下一个位置.
+所以在往栈中添加完元素后,指针+1, 将元素从栈中删除前,指针-1.
+
+push时往栈顶指针位置添加元素, push后栈顶指针+1.
+pop时先把栈顶指针-1, 然后取出栈顶指针位置的数组元素, 并回收栈顶指针位置的内存
+
+## SortedArraySet --> SortedIntArraySet
+数组+已分配的数量
+
+由于集合要求是有序的, 所以在将元素添加到集合中,使用二分查找,找出新添加的元素要加入的位置.
+然后在原先数组的位置以及之后的元素都要整体右移一位.
+删除元素时,则是将当前位置以及之后的元素都整体左移一位.
+
+二分查找,如果key在集合中. 则返回值>0. 在添加元素时,不允许重复key.
+在删除元素时,二分查找的返回值要>0. 否则元素不存在的话,就无法删除.
+
+## HashMap --> IntHashMap
+
+链表也使用数组, 普通的数组只能保存一个元素. 但是Map的key通过散列分布到数组中, 可能不同的key会在同一个数组中.
+所以数组的每个元素可以保存多个条目, 多个散列冲突的条目使用链表链接在一起.
+
+在每次put数据时, 首先要计算key对应数组的哪个索引位置. 然后将当前条目设置为数组索引位置的链表的表头:第一个条目.
+
+数组扩容时,由于数组长度发生变化, 原先数组中的每个元素要放到新数组中, 则每个条目都要进行rehash重新计算索引位置.
+
+IntHashMap有2个内部类: IntEntry表示Map的每个条目, 如果其在链表中有下一个条目, 则使用next指针进行引用
+IntHashMapIterator迭代器用来迭代获取Map的每个条目. 迭代器要实现hasNext,next方法.
+
+FixedIntHashMap使用2个数组来保存Map. 所以新的条目会覆盖旧的条目. 2个数组的索引位置分别存放相应的key,value.
+
+LinkedHashMap实现与HashMap的不同之处在于，LinkedHashMap维护着一个运行于所有条目的双重链接列表
+http://stackvoid.com/implementation-of-LinkedHashMap-and-LRU-implementation/
+
+![linkedhashmap](LinkedHashMap.png "LinkedHashMap")
+
+LinkedHashMap中加入了一个head头结点，将所有插入到该LinkedHashMap中的Entry按照插入的先后顺序
+（accessOrder标志位默认为false）依次加入到以head为头结点的双向循环链表的尾部。
+
+LinkedHashMap实际上就是HashMap和LinkedList两个集合类的存储结构的结合。
+在LinkedHashMapMap中，所有put进来的Entry都保存在 如图所示的哈希表中，
+但它又额外定义了一个以head为头结点的空的双向循环链表，每次put进来Entry，
+除了将其保存到对哈希表中对应的位置上外，还要将其插入到双向循环链表的尾部。
+
+LinkedHashMap继承自HashMap，具有HashMap的大部分特性，比如支持null键和值，默认容量为16，装载因子为0.75，非线程安全等等；
+LinkedHashMap通过设置accessOrder控制遍历顺序是按照插入顺序还是按照访问顺序。当accessOrder为true时，可以利用其完成LRU缓存的功能；
+LinkedHashMap内部维护了一个双向循环链表，并且其迭代操作时通过链表完成的，而不是去遍历hash表。
+
+## WeakSet

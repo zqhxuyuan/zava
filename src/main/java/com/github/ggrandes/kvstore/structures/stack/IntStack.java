@@ -78,7 +78,7 @@ public class IntStack {
 	public final void push(final int value) {
         //在push到stack中,先把栈顶指针+1, 并且判断是否需要扩容
 		growToHold(stackPointer+1);
-        //往栈顶添加元素
+        //往栈顶所在的数组位置添加元素, 添加完后, 栈顶指针+1
 		stack[stackPointer++] = value;
 	}
 
