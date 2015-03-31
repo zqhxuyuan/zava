@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import com.github.ggrandes.kvstore.structures.hash.IntHashMap;
 
 /**
- * Pool of ByteBuffers
+ * Pool of ByteBuffers ByteBuffer池. 就像连接池中存放的是多个连接. ByteBuffer池也存放多个ByteBuffer
  * This class is Thread-Safe
  * 
  * <a href="http://www.evanjones.ca/software/java-bytebuffers.html">Efficient Java I/O: ByteBuffer</a>
@@ -27,7 +27,7 @@ import com.github.ggrandes.kvstore.structures.hash.IntHashMap;
  * @author Guillermo Grandes / guillermo.grandes[at]gmail.com
  */
 public class BufferStacker {
-	//
+	//ByteBuffer池
 	private static IntHashMap<BufferStacker> INSTANCES = new IntHashMap<BufferStacker>(BufferStacker.class);
 	//
 	private java.util.Deque<ByteBuffer> stack = new java.util.ArrayDeque<ByteBuffer>();
@@ -48,6 +48,8 @@ public class BufferStacker {
 		final int key = composeKey(bufferLen, isDirect);
 		synchronized (INSTANCES) {
 			BufferStacker bs = INSTANCES.get(key);
+            //如果这个ByteBuffer没有初始化, 则初始化, 并放入ByteBuffer池中
+            //如果已经存在, 则直接返回给调用者. 就像连接池中的连接如果已经存在, 则直接返回给客户端
 			if (bs == null) {
 				bs = new BufferStacker(bufferLen);
 				INSTANCES.put(key, bs);
@@ -56,7 +58,7 @@ public class BufferStacker {
 		}
 	}
 
-	//
+	//给定一个长度, 使用ByteBuffer池给它分配一个ByteBuffer
 	private static final int composeKey(final int bufferLen, final boolean isDirect) {
 		return (((bufferLen & 0x3FFFFFFF) << 1) | (isDirect ? 1 : 0));
 	}
