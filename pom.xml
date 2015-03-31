@@ -482,11 +482,13 @@
             <version>5.0.0</version>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
             <version>1.0.8</version>
         </dependency>
+        -->
 
         <dependency>
             <groupId>concurrent</groupId>

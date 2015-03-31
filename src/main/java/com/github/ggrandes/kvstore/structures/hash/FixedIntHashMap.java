@@ -33,14 +33,13 @@ public class FixedIntHashMap<T> {
 	private static final Logger log = Logger.getLogger(FixedIntHashMap.class);
 	private int elementCount;
 
+    //不再使用Entry. 而是使用2个数组.
 	private int[] elementKeys;
 	private T[] elementValues;
 
 	private final float loadFactor;
 	private final GenericFactory<T> arrayFactory;
-
 	private int threshold;
-
 	private int defaultSize = 16;
 	private int collisions = 0;
 

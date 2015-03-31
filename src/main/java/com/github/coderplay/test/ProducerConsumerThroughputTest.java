@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.coderplay.util.concurrent.queue;
+package com.github.coderplay.test;
 
 import java.util.HashMap;
 import java.util.Map;

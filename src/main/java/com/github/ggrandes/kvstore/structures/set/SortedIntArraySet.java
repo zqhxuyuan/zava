@@ -29,41 +29,51 @@ public class SortedIntArraySet {
 	private static final Logger log = Logger.getLogger(SortedIntArraySet.class);
 	//
 	public int[] keys;
-	public int allocated = 0;
-	/**
+    //注意allocated的值和数组的索引的区别. 假设数组有5个元素, 则allocated=5, 数组最大的索引是4
+	public int allocated = 0;  //已经分配的数量
+
+    /**
 	 * Create with initial size
 	 * @param size
 	 */
 	public SortedIntArraySet(final int size) {
 		allocArray(size);
 	}
-	/**
+
+    /**
 	 * Alloc array
 	 * @param size
 	 */
 	private final void allocArray(final int size) {
 		keys = new int[size];
 	}
-	/**
+
+    /**
 	 * Resize array
 	 */
 	private final void resizeArray() {
 		if (log.isDebugEnabled())
 			log.debug("resizeArray size=" + keys.length + " newsize=" + (keys.length << 1));
 		final int[] newkeys = new int[keys.length << 1]; // double space
+
+        //allocated表示数组的长度. 也就是arraycopy需要从源数组中复制的长度
 		System.arraycopy(keys, 0, newkeys, 0, allocated);
 		keys = newkeys;
 	}
+
 	/**
-	 * Find slot by key
-	 * @param searchKey
-	 * @return
+	 * Find slot by key 根据key寻找这个key将要存放的slot位置.
+     * 因为Set是要有序的. 所以使用二分查找.
+	 * @param searchKey 要查找的键
+	 * @return 键在有序集合中的位置
 	 */
 	private final int findSlotByKey(final int searchKey) {
+        //二分查找的from=0, end是数组的长度array.length, 而不是最后一个元素的index
 		return Arrays.binarySearch(keys, 0, allocated, searchKey);
 	}
-	/**
-	 * Is empty?
+
+    /**
+	 * Is empty? 初始时allocated=0, 表示没有分配任何元素
 	 * @return
 	 */
 	public boolean isEmpty() { // empty
@@ -86,41 +96,38 @@ public class SortedIntArraySet {
 		allocated = 0;
 	}
 	/**
-	 * insert element
+	 * insert element 插入一个元素
+     * 往指定的位置插入一个元素, 这个指定位置的元素以及之后的元素都要后移一位
+     *
+     * 0  1  3  5  7  9
+     *     ^2
+     * findSlotByKey=2, srcPos=2
+     *
+     * Coppy(eles1, 2, eles1, 3, (allocated-srcPos))    allocated=6,srcPos=2,需要一定6-2=4位
+     * eles1: 0 1 3 5 7 9      从eles1的第2个位置开始,复制到eles1的第3个位置开始,一共复制4位
+     * eles1: 0 1 3 3 5 7 9
+     *
+     * move完后,要将srcPos的位置设置为要插入的元素.
 	 */
 	private final void moveElementsRight(final int[] elements, final int srcPos) {
 		if (log.isDebugEnabled())
 			log.debug("moveElementsRight(" + srcPos + ") allocated=" + allocated + ":" + keys.length + ":" + (allocated - srcPos) + ":" + (keys.length - srcPos - 1));
 		System.arraycopy(elements, srcPos, elements, srcPos + 1, (allocated - srcPos));
 	}
+
 	/**
-	 * remove element
+	 * remove element 删除一个元素
+     * 0 1 2 3 5 7 9
+     *     ×
+     * findSlotByKey=2, srcPos=2,
+     * 从当前要删除的位置的下一个位置开始,复制(allocated - srcPos - 1), 复制后的位置的开始位置是srcPos
 	 */
 	private final void moveElementsLeft(final int[] elements, final int srcPos) {
 		if (log.isDebugEnabled())
 			log.debug("moveElementsLeft(" + srcPos + ") allocated=" + allocated + ":" + keys.length + ":" + (allocated - srcPos - 1) + ":" + (keys.length - srcPos - 1));
 		System.arraycopy(elements, srcPos + 1, elements, srcPos, (allocated - srcPos - 1));
 	}
-	/**
-	 * remove slot
-	 * @param slot
-	 * @return
-	 */
-	private final boolean removeSlot(final int slot) {
-		if (slot < 0) {
-			log.error("faking slot=" + slot + " allocated=" + allocated);
-			return false;
-		}
-		if (slot < allocated) {
-			moveElementsLeft(keys, slot);
-		}
-		if (allocated > 0)
-			allocated--;
-		if (log.isDebugEnabled())
-			log.debug("erased up key=" + keys[allocated]);
-		keys[allocated] = NULL_VALUE;
-		return true;
-	}
+
 	/**
 	 * remove key
 	 * @param key
@@ -131,8 +138,33 @@ public class SortedIntArraySet {
 		if (slot >= 0) {
 			return removeSlot(slot);
 		}
+        //如果slot<0, 表示没有找到key,就无法删除了!
 		return false;
 	}
+    /**
+     * remove slot
+     * @param slot 实际上是数组的索引
+     * @return
+     */
+    private final boolean removeSlot(final int slot) {
+        if (slot < 0) {
+            log.error("faking slot=" + slot + " allocated=" + allocated);
+            return false;
+        }
+        if (slot < allocated) {
+            moveElementsLeft(keys, slot);
+        }
+        //数组的容量减1
+        if (allocated > 0) allocated--;
+        if (log.isDebugEnabled())
+            log.debug("erased up key=" + keys[allocated]);
+
+        //现在allocated实际上指向还没删除前的最后一个元素的索引. 因为allocated--, 即allocated=array.length-1
+        //将要删除的元素设置为null
+        keys[allocated] = NULL_VALUE;
+        return true;
+    }
+
 	/**
 	 * put key
 	 * @param key
@@ -143,16 +175,18 @@ public class SortedIntArraySet {
 			resizeArray();
 		}
 		int slot = findSlotByKey(key);
+        //二分查找,找到key的话,slot>0
 		if (slot >= 0) {
 			if (log.isDebugEnabled())
 				log.debug("key already exists: " + key);
 			return false; // key already exist
 		}
+        //如果没有找到key的话,返回的是一个负数
 		slot = ((-slot) - 1);
 		return addSlot(slot, key);
 	}
 	/**
-	 * add slot
+	 * add slot 往指定的位置添加一个key
 	 * @param slot
 	 * @param key
 	 * @return
@@ -165,6 +199,7 @@ public class SortedIntArraySet {
 		keys[slot] = key;
 		return true;
 	}
+
 	/**
 	 * Returns the first (lowest) element currently in this set.
 	 */
@@ -177,6 +212,7 @@ public class SortedIntArraySet {
 	public int last() {
 		if (allocated == 0)
 			return NULL_VALUE;
+        //数组的容量-1, 就是数组已填充的最后一个元素的索引
 		return keys[allocated-1];
 	}
 	/**

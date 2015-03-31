@@ -1,5 +1,6 @@
 package com.zqh.base;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -14,7 +15,16 @@ public class TestCol {
     public static void main(String[] args) {
         //testLinkedList();
 
-        testRange();
+        //testRange();
+        testBinarySearch();
+    }
+
+    public static void testBinarySearch(){
+        int[] arr = new int[]{0,1,3,4,5,6,7,8};
+        int index = Arrays.binarySearch(arr, 0, arr.length, 2);
+        System.out.println(index);
+
+        System.out.println(-index - 1);
     }
 
     public static void testRange(){

@@ -23,8 +23,8 @@ import java.util.Arrays;
  */
 public class IntStack {
 	private static final int DEFAULT_NULL = -1;
-	private final int null_value;
-	private int stackPointer;
+	private final int null_value;   //用来回收内存
+	private int stackPointer;       //栈顶指针
 	private int[] stack;
 
 	/**
@@ -76,7 +76,9 @@ public class IntStack {
 	 * @param value to push
 	 */
 	public final void push(final int value) {
+        //在push到stack中,先把栈顶指针+1, 并且判断是否需要扩容
 		growToHold(stackPointer+1);
+        //往栈顶添加元素
 		stack[stackPointer++] = value;
 	}
 
@@ -89,6 +91,7 @@ public class IntStack {
 			return null_value;
 		}
 		final int element = stack[--stackPointer];
+        //回收内存
 		stack[stackPointer] = null_value;
 		return element;
 	}
