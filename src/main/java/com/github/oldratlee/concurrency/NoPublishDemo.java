@@ -14,8 +14,10 @@ public class NoPublishDemo {
     public static void main(String[] args) {
         // LoadMaker.makeLoad();
 
+        //主线程
         NoPublishDemo demo = new NoPublishDemo();
 
+        //任务线程
         Thread thread = new Thread(demo.getConcurrencyCheckTask());
         thread.start();
 

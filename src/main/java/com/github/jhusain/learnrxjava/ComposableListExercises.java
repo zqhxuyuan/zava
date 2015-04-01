@@ -28,6 +28,11 @@ import com.github.jhusain.learnrxjava.types.Video;
 public class ComposableListExercises<T> extends ArrayList<T> implements ComposableList<T> {
     private static final long serialVersionUID = 1L;
 
+    public static void main(String[] args) {
+        //ComposableListExercises.of(1,2,3).map(x -> x + 1);
+        exercise5();
+    }
+
     /*
     Exercise 1: Consuming the data in a list
 
@@ -54,6 +59,9 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
     allows us to consume the data in all collections the same way regardless of 
     whether the collection is a List, Stream, or an Reactive Stream (aka Observable). 
 
+    forEach方法比java的for each循环语句有更多的功能.
+    比如它可以同步执行List里的每个元素, 也可以异步地处理Reactive流数据.
+
     From now on we will _always_ use the forEach method instead of the Java for each loop 
     so that we can get comfortable with this new method. Note that the code is very 
     similar, and we get the same result whether we are using the Java for each syntax 
@@ -71,12 +79,11 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
     }
 
     /*
-    Exercise 3: Projecting a list
+    Exercise 3: Projecting a list 映射
 
-    Applying a function to a value and creating a new value is called a 
-    projection. To project contents of one List into another, we apply 
-    a projection function to each item in the List and collect the results in 
-    a new List.
+    Applying a function to a value and creating a new value is called a projection.
+    To project contents of one List into another, we apply a projection function
+    to each item in the List and collect the results in a new List.
 
     Project a list of videos into a list of {id,title} JSON objects using forEach.
 
@@ -92,7 +99,8 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
                 new Video(675465, "Fracture", 5.0));
 
         ComposableListExercises<JSON> videoAndTitlePairs = new ComposableListExercises<JSON>();
-        
+
+        //对象转换
         newReleases.forEach(video -> {
            videoAndTitlePairs.add(json("id", video.id, "title", video.title));
         });
@@ -120,6 +128,7 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
      */
     public <R> ComposableList<R> map(Function<T, R> projectionFunction) {
         ComposableListExercises<R> results = new ComposableListExercises<R>();
+
         this.forEach(itemInList -> {
             // ------------ INSERT CODE HERE! ----------------------------
             // Apply the projectionFunction to each item in the list and add
@@ -127,11 +136,13 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
             // Note that you can apply a projectionFunction to a value like this:
             //  projectionFunction.apply(5)
             // ------------ INSERT CODE HERE! ----------------------------
-            
+            results.add(
+                    projectionFunction.apply(itemInList)
+            );
         });
         
-        //return results;
-        throw new UnsupportedOperationException("Not implemented yet.");
+        return results;
+        //throw new UnsupportedOperationException("Not implemented yet.");
     }
     
     /*
@@ -148,8 +159,21 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
             new Video(675465, "Fracture", 5.0));
          
         // complete this expression 
-        // return newReleases.map(video -> 
-        throw new UnsupportedOperationException("Not implemented yet.");
+        // return newReleases.map(video ->
+        //throw new UnsupportedOperationException("Not implemented yet.");
+
+        ComposableListExercises<JSON> videoAndTitlePairs = new ComposableListExercises<JSON>();
+
+        newReleases.map(video ->
+                videoAndTitlePairs.add(json("id", video.id, "title", video.title))
+        );
+
+        for (JSON json : videoAndTitlePairs){
+            //System.out.println("id:"+json.get("id") + ";title:"+json.get("title"));
+            System.out.println(json);
+        }
+
+        return videoAndTitlePairs;
     }
 
     /*
@@ -163,26 +187,10 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
      */
     public static ComposableList<Video> exercise6() {
         ComposableListExercises<Video> newReleases = ComposableListExercises.of(
-            new Video(
-                    70111470,
-                    "Die Hard",
-                    4.0
-            ),
-            new Video(
-                    654356453,
-                    "Bad Boys",
-                    5.0
-            ),
-            new Video(
-                    65432445,
-                    "The Chamber",
-                    4.0
-            ),
-            new Video(
-                    675465,
-                    "Fracture",
-                    5.0
-            ));
+            new Video(70111470, "Die Hard", 4.0),
+            new Video(654356453, "Bad Boys", 5.0),
+            new Video(65432445, "The Chamber", 4.0),
+            new Video(675465, "Fracture", 5.0));
 
         ComposableListExercises<Video> highRatedVideos = new ComposableListExercises<Video>();
 
@@ -190,8 +198,16 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
             // Insert code here that adds a video to the highRatedVideos list
             // if it has a rating of 5.0.
 
+            //TODO zqh
+            highRatedVideos.add(video);
+            highRatedVideos.filter(video1 -> video1.rating > 5);
+
+            //Java Way
+            if(video.rating > 5){
+                highRatedVideos.add(video);
+            }
         });
-        
+
         // return highRatedVideos;
         throw new UnsupportedOperationException("Not implemented yet.");        
     }
@@ -221,7 +237,7 @@ public class ComposableListExercises<T> extends ArrayList<T> implements Composab
             // Note: you can apply the predicateFunction to a value like this:
             // predicateFunction.test(5)
             // ------------ INSERT CODE HERE! ----------------------------
-
+            predicateFunction.test(itemInList);
         });
 
         // return results;

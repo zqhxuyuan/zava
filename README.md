@@ -53,12 +53,17 @@ Reading Status: √: Yes. ×:NonYet
 × @zhanglubing/designpattern
 
 
-## DataStructure | Concurrent
-
-√ **coderplay**
+## DataStructure
 
 √ **netcomm/sponge**
 
+## Concurrent
+
+√ **coderplay**
+
+√ **oldratlee/concurrency**
+
+× Viscent/JavaConcurrencyPattern
 
 ## MapRecue
 
