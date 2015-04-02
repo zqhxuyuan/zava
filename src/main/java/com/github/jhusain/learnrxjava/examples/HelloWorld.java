@@ -146,8 +146,7 @@ public class HelloWorld {
                         System.out.println("delay retry by " + i + " second(s)");
                         return Observable.timer(i, TimeUnit.SECONDS);
                     }).concatWith(Observable.error(new RuntimeException("Exceeded 3 retries")));
-        })
-                .subscribe(System.out::println, t -> t.printStackTrace());
+        }).subscribe(System.out::println, t -> t.printStackTrace());
 
         try {
             Thread.sleep(20000);

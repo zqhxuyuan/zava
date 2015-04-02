@@ -1,0 +1,61 @@
+package com.github.benjchristensen.gist.perf;
+
+import rx.Observable;
+
+public class TestRxPerf extends AbstractPerformanceTester {
+
+    static final int NUM_ITEMS_PER_OBSERVABLE = 1;
+    //    static final long LOOP = Long.MAX_VALUE;
+    static final long LOOP = 1000000;
+    static final long REPS = NUM_ITEMS_PER_OBSERVABLE * LOOP;
+
+    protected TestRxPerf() {
+        super(REPS);
+    }
+
+    public static void main(String args[]) {
+
+        final TestRxPerf pt = new TestRxPerf();
+        final UseCaseInput input = new UseCaseInput();
+        input.size = NUM_ITEMS_PER_OBSERVABLE;
+        input.setup();
+        try {
+            pt.runTest(() -> {
+                for (int i = 0; i < LOOP; i++) {
+                    try {
+                        pt.mapTransformation(input);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void mapTransformation(UseCaseInput input) throws InterruptedException {
+        input.observable.map(i -> {
+            return String.valueOf(i);
+
+        }).map(i -> {
+            return Integer.parseInt(i);
+        }).subscribe(input.observer);
+        input.awaitCompletion();
+    }
+
+    public void flatMapTransformsUsingFrom(UseCaseInput input) throws InterruptedException {
+        input.observable.flatMap(i -> {
+            return Observable.from(i);
+        }).subscribe(input.observer);
+        input.awaitCompletion();
+    }
+
+    public void flatMapTransformsUsingJust(UseCaseInput input) throws InterruptedException {
+        input.observable.flatMap(i -> {
+            return Observable.just(i);
+        }).subscribe(input.observer);
+        input.awaitCompletion();
+    }
+}
