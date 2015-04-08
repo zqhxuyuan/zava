@@ -126,6 +126,7 @@ public class ComposableListSolutions<T> extends ArrayList<T> implements Composab
      */
     public <R> ComposableList<R> map(Function<T, R> projectionFunction) {
         ComposableListSolutions<R> results = new ComposableListSolutions<R>();
+
         this.forEach(itemInList -> {
             // ------------ INSERT CODE HERE! ----------------------------
             // Apply the projectionFunction to each item in the list and add
@@ -219,6 +220,9 @@ public class ComposableListSolutions<T> extends ArrayList<T> implements Composab
      */
     public ComposableList<T> filter(Predicate<T> predicateFunction) {
         ComposableListSolutions<T> results = new ComposableListSolutions<T>();
+
+        //为什么使用this: 因为filter并没有改变List的类型, 只是过滤了部分数据.
+        //List经过filter后的还是一个subList
         this.forEach(itemInList -> {
             // ------------ INSERT CODE HERE! ----------------------------
             // Apply the predicateFunction to each item in the list. If the
@@ -257,7 +261,8 @@ public class ComposableListSolutions<T> extends ArrayList<T> implements Composab
         // Chain the filter and map functions to select the id of all videos
         // with a rating of 5.0.
         
-        return newReleases.filter(v -> v.rating == 5).map(v -> v.id);
+        return newReleases.filter(v -> v.rating == 5)
+                          .map(v -> v.id);
 
         // ------------ INSERT CODE HERE! -----------------------------------
     }
@@ -339,8 +344,10 @@ public class ComposableListSolutions<T> extends ArrayList<T> implements Composab
             // inner list and add each item to the results list.
             // Note that you can apply a projectionFunction to a value like this:
             // projectionFunctionThatReturnsList.apply(5)
-            
+
+            //just like map operation, use projectFunction.apply(item). concatMap use the same apply method
             ComposableList<R> l = projectionFunctionThatReturnsList.apply(itemInList);
+            //we can thought this is double-for-loop
             l.forEach(r -> {
                 results.add(r);
             });
@@ -378,8 +385,7 @@ public class ComposableListSolutions<T> extends ArrayList<T> implements Composab
         // return movieLists // finish expression
         // ------------   INSERT CODE HERE!  -----------------------------------
         // **************ANSWER START***************//
-         return movieLists.
-             concatMap(movieList -> 
+         return movieLists.concatMap(movieList ->
                  movieList.videos.map(video -> video.id));
         // **************ANSWER END***************//
     }
